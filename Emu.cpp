@@ -3,6 +3,11 @@
 #include "ninja.h"
 #include "resource.h"
 
+#include "oddity.h"
+
+cNinjaLED *LEDdisplay = NULL;
+byte framebuffer[FRAME_SIZE];
+
 BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg) 
@@ -14,14 +19,28 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       createNinjaButton(GetDlgItem(hWnd,IDC_EXITODD),NULL,NJALIGN_CENTER,FALSE);
       setBaseHeavyStyle(GetDlgItem(hWnd,IDC_EXITODD),TRUE);
 
-      createNinjaLED(GetDlgItem(hWnd,IDC_LED));
+      LEDdisplay = createNinjaLED(GetDlgItem(hWnd,IDC_LED));
 
-      SetTimer(hWnd,0x01,30,NULL);
+      SetTimer(hWnd,0x01,16,NULL);
+
+      memset(framebuffer, 0, sizeof(framebuffer));
+      oddity_init();
     }
     break;
 
   case WM_TIMER:
     {
+      memset(framebuffer, 0, sizeof(framebuffer));
+
+      hw_inputs inputs;
+      memset(&inputs, 0, sizeof(inputs));
+
+      oddity_tick(framebuffer, inputs);
+
+      LEDdisplay->decodeFramebuffer(framebuffer);
+      // decode framebuffer
+
+      InvalidateRect(LEDdisplay->hwHost, 0, FALSE);
     }
     break;
 

@@ -28,6 +28,11 @@ public:
 	// static funtions callable via the control namespace
 	static void registerThis(HINSTANCE hInstance);
 	static void unregisterThis(HINSTANCE hInstance);
+  void decodeFramebuffer( sUInt8 *framebuffer );
+
+protected:
+
+  COLORREF  m_LEDs[16][16];
 };
 
 // common creation and destruction functions for this control

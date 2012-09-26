@@ -19,7 +19,6 @@
 #include "ninja.h"
 #include "GDITools.h"
 
-
 static COLORREF ledColors[4][4];
 
 /*===========================================================================*\
@@ -81,28 +80,53 @@ void cNinjaLED::draw(HDC hdc)
   sNinjaGDI	*curNGDI = getActiveNGDI();
   if(!curNGDI) return;
 
+
   RECT checkTag;
   checkTag.top = 0;
   checkTag.left = 0;
   checkTag.right = checkTag.left + (16 * 18) + 3 + 3;
   checkTag.bottom = checkTag.top + (16 * 18) + 3 + 3;
 
-  njColourRect(hdc, &checkTag, RGB(0,0,0));
+  // create double buffer storage
+  HDC hdcN	= CreateCompatibleDC(hdc);
+  HBITMAP img = CreateCompatibleBitmap(hdc,checkTag.right + 1,checkTag.bottom + 1);
+  SelectObject(hdcN,img);
+
+  njColourRect(hdcN, &checkTag, RGB(0,0,0));
 
   for (int y=0; y<16; y++)
   {
     for (int x=0; x<16; x++)
     {
       // draw the checkbox tag
-      checkTag.top = 4 + (y * 18);
-      checkTag.left = 4 + (x * 18);
+      checkTag.top = 2 + (y * 18);
+      checkTag.left = 2 + (x * 18);
       checkTag.right = checkTag.left + 16;
       checkTag.bottom = checkTag.top + 16;
-      njColourRect(hdc, &checkTag, ledColors[x % 4][y % 4]);
+      njColourRect(hdcN, &checkTag, m_LEDs[x][y]);
+    }
+  }
+
+  // copy the buffer, and delete the DC
+  BitBlt(hdc,0,0,checkTag.right + 1,checkTag.bottom + 1,hdcN,0,0,SRCCOPY);
+  DeleteObject(img);
+  DeleteDC(hdcN);
+}
+
+void cNinjaLED::decodeFramebuffer( sUInt8 *framebuffer )
+{
+  for (int y=0; y<16; y++)
+  {
+    for (int x=0; x<16; x++)
+    {
+      sUInt8 pixel = framebuffer[(y * 16) + x];
+      sUInt8 red   = pixel & 0x0f;
+      sUInt8 green = (pixel >> 4) & 0x0f;
+
+      m_LEDs[x][y] = ledColors[red][green];
     }
   }
 }
-
 
 
 /*===========================================================================*\
