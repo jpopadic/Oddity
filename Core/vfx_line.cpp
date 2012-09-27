@@ -100,7 +100,7 @@ void WuLine(byte* frame, Fix16 x1, Fix16 y1, Fix16 x2, Fix16 y2, ColourChoice cc
 
   int16_t xa = xpxl1 + 1;
   int16_t xb = xpxl2 - 1;
-  for (; xa < xb; xa ++)
+  for (; xa <= xb; xa ++)
   {
     GetBasicColour(rfpart(intery), cc, r, g);
     setLED(frame, xa, ipart(intery).asInt(), r, g, true, swapXY);

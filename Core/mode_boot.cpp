@@ -11,78 +11,97 @@
 #include "vfx.h"
 #include "mode_boot.h"
 
+static const Fxp3D verts[8] = {
+  Fxp3D(-1.0f,  1.0f, -1.0f),
+  Fxp3D( 1.0f,  1.0f, -1.0f),
+  Fxp3D( 1.0f, -1.0f, -1.0f),
+  Fxp3D(-1.0f, -1.0f, -1.0f),
 
-static int8_t gGlowBuffer[FRAME_WIDTH * (FRAME_HEIGHT + 1)];
-static Fix16 gDecay;
-static bool gRed;
+  Fxp3D(-1.0f,  1.0f,  1.0f),
+  Fxp3D( 1.0f,  1.0f,  1.0f),
+  Fxp3D( 1.0f, -1.0f,  1.0f),
+  Fxp3D(-1.0f, -1.0f,  1.0f),
+};
+
+static const int faces[6 * 4] = {
+  0,1,2,3,
+  1,5,6,2,
+  5,4,7,6,
+  4,0,3,7,
+  0,4,5,1,
+  3,2,6,7
+};
+
+static Fix16 rotX, rotY, rotZ, distPulse;
+static ColourChoice ccCycle;
 
 // ---------------------------------------------------------------------------------------------------------------------
 void BootMode::init()
 {
-  ZeroFrame(gGlowBuffer);
-  gDecay = 0.22f;
-  gRed = true;
+  rotX = (fix16_t)gRNG.genUInt32(0, 0xffff);
+  rotY = (fix16_t)gRNG.genUInt32(0, 0xffff);
+  rotZ = (fix16_t)gRNG.genUInt32(0, 0xffff);
+  distPulse = 0.0f;
+
+  ccCycle = (ColourChoice)gRNG.genUInt32(0, Yellow);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 bool BootMode::tick(State &state)
 {
-  if (state.m_inputs.encoderChange[0])
-    gRed = !gRed;
+  if (state.m_counter > 300)
+    return false;
 
-  const byte Rr[] = { 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };
-  const byte Gr[] = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3 };
+  Fxp3D pj[8];
 
-  const byte Rg[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 3 };
-  const byte Gg[] = { 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };
+  Fix16 fov(9.0f), dist;
 
-  for (int y=0; y<FRAME_HEIGHT; y++)
+  dist = dist.cos(distPulse);
+  dist *= 0.5f;
+  dist += 2.2f;
+
+
+  for (int i=0; i<8; i++)
   {
-    for (int x=0; x<FRAME_WIDTH; x++)
-    {
-      int8_t pix = 0;
-
-      int8_t pixelA = gGlowBuffer[(y+1) * FRAME_WIDTH + x];
-
-      int8_t *pixelB = (x > 0) ? &gGlowBuffer[(y+1) * FRAME_WIDTH + (x - 1)] : 0;
-      int8_t *pixelC = (x < FRAME_WIDTH - 1) ? &gGlowBuffer[(y+1) * FRAME_WIDTH + (x + 1)] : 0;
-
-      int8_t *pixelD = (x > 0) ? &gGlowBuffer[y * FRAME_WIDTH + (x - 1)] : 0;
-      int8_t *pixelE = (x < FRAME_WIDTH - 1) ? &gGlowBuffer[y * FRAME_WIDTH + (x + 1)] : 0;
-
-      pix += pixelA;
-
-      if (pixelB)
-        pix += *pixelB;
-      if (pixelC)
-        pix += *pixelC;
-      if (pixelD)
-        pix += *pixelD;
-      if (pixelE)
-        pix += *pixelE;
-
-      Fix16 fPix((int16_t)pix);
-      fPix *= gDecay;
-      pix = fPix.asInt();
-      pix -= 1;
-
-      if (pix < 0)
-        pix = 0;
-      if (pix > 12)
-        pix = 12;
-
-
-      gGlowBuffer[ (y * FRAME_HEIGHT) + x ] = pix;
-
-      setLED(state.m_frame, x, y, gRed ? Rr[pix] : Rg[pix], gRed ? Gr[pix] : Gg[pix]);
-    }
+    pj[i] = verts[i].eulerProject(rotX, rotY, rotZ, fov, dist);
   }
 
-  for (int i=0; i<4; i++)
-    gGlowBuffer[ (16 * FRAME_HEIGHT) + (gRNG.genUInt32(0, 15)) ] = (int8_t)gRNG.genInt32(10, 28);
+  rotX += 1.0f;
+  rotY += 2.0f;
+  rotZ += 0.5f;
+  distPulse += 0.07f;
 
-  for (int i=0; i<2; i++)
-    gGlowBuffer[ (gRNG.genUInt32(0, 15) * FRAME_HEIGHT) + (gRNG.genUInt32(0, 15)) ] = 0;
+  for (int f=0; f<6; f++)
+  {
+    int bi = (f * 4);
+    draw::WuLine(state.m_frame,
+      pj[ faces[bi + 0] ].x,
+      pj[ faces[bi + 0] ].y,
+      pj[ faces[bi + 1] ].x,
+      pj[ faces[bi + 1] ].y,
+      ccCycle);
+
+    draw::WuLine(state.m_frame,
+      pj[ faces[bi + 1] ].x,
+      pj[ faces[bi + 1] ].y,
+      pj[ faces[bi + 2] ].x,
+      pj[ faces[bi + 2] ].y,
+      ccCycle);
+
+    draw::WuLine(state.m_frame,
+      pj[ faces[bi + 2] ].x,
+      pj[ faces[bi + 2] ].y,
+      pj[ faces[bi + 3] ].x,
+      pj[ faces[bi + 3] ].y,
+      ccCycle);
+
+    draw::WuLine(state.m_frame,
+      pj[ faces[bi + 3] ].x,
+      pj[ faces[bi + 3] ].y,
+      pj[ faces[bi + 0] ].x,
+      pj[ faces[bi + 0] ].y,
+      ccCycle);
+  }
 
   return true;
 }

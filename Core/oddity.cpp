@@ -23,6 +23,7 @@ static uint32_t   gFrameCounter = 0;
 void oddity_init()
 {
   gModeList[Mode::Boot] = new BootMode();
+  gModeList[Mode::Flame] = new FlameMode();
 
   gMode = Mode::Boot;
 
@@ -37,7 +38,13 @@ bool oddity_tick(byte* frame, const hw_inputs& inputs)
   tickState.m_inputs = inputs;
   tickState.m_counter = gFrameCounter ++;
 
-  gModeList[gMode]->tick(tickState);
+  if (!gModeList[gMode]->tick(tickState))
+  {
+    gMode = (Mode::Enum)( (gMode + 1) % Mode::Count );
+    gModeList[gMode]->init();
+
+    gFrameCounter = 0;
+  }
 
   return true;
 }

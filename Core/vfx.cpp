@@ -78,3 +78,25 @@ void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g)
     g = A[index];
   }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+extern const unsigned char* getFontGlyphData(char c);
+
+void draw::FontGlyph(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
+{
+  const unsigned char* fontBuf = getFontGlyphData(c);
+  if (!fontBuf)
+    return;
+
+  byte r, g;
+  int idx = 0;
+  for (int y=0; y<FRAME_HEIGHT; y++)
+  {
+    for (int x=0; x<FRAME_WIDTH; x++)
+    {
+      GetBasicColour((int16_t)fontBuf[idx], cc, r, g);
+      setLED(frame, x + fx, y + fy, r, g);
+      idx ++;
+    }
+  }
+}

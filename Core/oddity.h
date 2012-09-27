@@ -53,6 +53,8 @@ namespace Mode
   {
     Boot,
 
+    Flame,
+      
     Count
   };
 }

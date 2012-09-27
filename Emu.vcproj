@@ -335,6 +335,26 @@
 			Name="core"
 			>
 			<File
+				RelativePath=".\Core\maxcarnage.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\Core\mode.h"
 				>
 			</File>
@@ -360,6 +380,30 @@
 			</File>
 			<File
 				RelativePath=".\Core\mode_boot.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Core\mode_flame.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Core\mode_flame.h"
 				>
 			</File>
 			<File
@@ -412,6 +456,26 @@
 			</File>
 			<File
 				RelativePath=".\Core\vfx_line.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Core\vfx_textscroll.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -565,6 +629,10 @@
 				</File>
 				<File
 					RelativePath=".\Core\fract32.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Core\fxp3d.h"
 					>
 				</File>
 				<File

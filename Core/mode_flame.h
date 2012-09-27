@@ -8,8 +8,14 @@
 */
 
 #pragma once
+#include "oddity.h"
+#include "vfx.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
-#include "mode_boot.h"
-#include "mode_flame.h"
+class FlameMode : public DisplayMode
+{
+public:
 
+  virtual void init();
+  virtual bool tick(State &state);
+};

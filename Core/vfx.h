@@ -8,7 +8,9 @@
 */
 
 #pragma once
+
 #include "oddity.h"
+#include "fxp3d.h"
 
 Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY);
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g);
@@ -36,6 +38,13 @@ inline void ZeroFrame(_T* frame)
     frame[i] = 0;
 }
 
+template <typename _Tf, typename _Tt>
+inline void CopyFrame(_Tf* from, _Tt* to)
+{
+  for(int i = 0; i < FRAME_SIZE; ++i)
+    to[i] = from[i];
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // the long-form way to set a single LED value, with overflow protection and so on
 void setLED(byte* frame, int x, int y, byte r, byte g, bool additive = false, bool swapXY = false);
@@ -52,9 +61,8 @@ enum ColourChoice
   Yellow
 };
 
-inline void GetBasicColour(Fix16 t, ColourChoice cc, byte& r, byte& g)
+inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
 {
-  int16_t index = (t * fix16_from_float(4.0f)).asInt();
   if (index > 3)
     index = 3;
   if (index < 0)
@@ -62,52 +70,58 @@ inline void GetBasicColour(Fix16 t, ColourChoice cc, byte& r, byte& g)
 
   switch (cc)
   {
-    case Red:
-      {
-        const byte R[] = { 0, 0, 0, 0 };
-        const byte G[] = { 0, 1, 2, 3 };
+  case Red:
+    {
+      const byte R[] = { 0, 1, 2, 3 };
+      const byte G[] = { 0, 0, 0, 0 };
 
-        r = R[index];
-        g = G[index];
-      }
-      break;
-    case Green:
-      {
-        const byte R[] = { 0, 1, 2, 3 };
-        const byte G[] = { 0, 0, 0, 0 };
+      r = R[index];
+      g = G[index];
+    }
+    break;
+  case Green:
+    {
+      const byte R[] = { 0, 0, 0, 0 };
+      const byte G[] = { 0, 1, 2, 3 };
 
-        r = R[index];
-        g = G[index];
-      }
-      break;
-    case Lime:
-      {
-        const byte R[] = { 0, 1, 1, 2 };
-        const byte G[] = { 0, 1, 2, 3 };
+      r = R[index];
+      g = G[index];
+    }
+    break;
+  case Lime:
+    {
+      const byte R[] = { 0, 1, 1, 2 };
+      const byte G[] = { 0, 1, 2, 3 };
 
-        r = R[index];
-        g = G[index];
-      }
-      break;
-    case Orange:
-      {
-        const byte R[] = { 0, 1, 2, 3 };
-        const byte G[] = { 0, 1, 1, 2 };
+      r = R[index];
+      g = G[index];
+    }
+    break;
+  case Orange:
+    {
+      const byte R[] = { 0, 1, 2, 3 };
+      const byte G[] = { 0, 0, 0, 3 };
 
-        r = R[index];
-        g = G[index];
-      }
-      break;
-    case Yellow:
-      {
-        const byte R[] = { 0, 1, 2, 3 };
-        const byte G[] = { 0, 1, 2, 3 };
+      r = R[index];
+      g = G[index];
+    }
+    break;
+  case Yellow:
+    {
+      const byte R[] = { 0, 1, 2, 3 };
+      const byte G[] = { 0, 1, 2, 3 };
 
-        r = R[index];
-        g = G[index];
-      }
-      break;
+      r = R[index];
+      g = G[index];
+    }
+    break;
   }
+}
+
+inline void GetBasicColour(Fix16 t, ColourChoice cc, byte& r, byte& g)
+{
+  int16_t index = (t * fix16_from_float(4.0f)).asInt();
+  GetBasicColour(index, cc, r, g);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -118,4 +132,24 @@ namespace draw
   // antialiased line
   void WuLine(byte* frame, Fix16 x1, Fix16 y1, Fix16 x2, Fix16 y2, ColourChoice cc);
 
+
+  void FontGlyph(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
+
 } // namespace draw
+
+// ---------------------------------------------------------------------------------------------------------------------
+class TextScroller
+{
+public:
+  TextScroller(const char* text);
+
+  void Render(byte* frame);
+
+protected:
+  const char* m_text;
+
+  int32_t m_len,
+          m_scroll, 
+          m_char, 
+          m_nextPixelCountdown;
+};
