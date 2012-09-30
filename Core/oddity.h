@@ -58,9 +58,10 @@ namespace Mode
   {
     Boot,
 
+    Wirecube,
     Flame,
     Plasma,
-    Storm,
+    Spark,
       
     Count
   };

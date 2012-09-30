@@ -136,7 +136,10 @@
       <Filter>core\Utils</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Core\mode_storm.h">
+    <ClInclude Include="Core\mode_wirecube.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\mode_spark.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
@@ -223,7 +226,10 @@
       <Filter>core\Utils</Filter>
     </ClCompile>
     <ClCompile Include="Emu.cpp" />
-    <ClCompile Include="Core\mode_storm.cpp">
+    <ClCompile Include="Core\mode_wirecube.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\mode_spark.cpp">
       <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>

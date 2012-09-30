@@ -26,11 +26,12 @@ static uint32_t   gFrameCounter = 0;
 void oddity_init()
 {
   gModeList[Mode::Boot] = new BootMode();
+  gModeList[Mode::Wirecube] = new WirecubeMode();
   gModeList[Mode::Flame] = new FlameMode();
   gModeList[Mode::Plasma] = new PlasmaMode();
-  gModeList[Mode::Storm] = new StormMode();
+  gModeList[Mode::Spark] = new SparkMode();
   
-  gMode = Mode::Storm;
+  gMode = Mode::Boot;
 
 #ifdef WIN32
   gRNG.reseed((uint32_t)time (NULL));

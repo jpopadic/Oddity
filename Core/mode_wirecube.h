@@ -12,7 +12,7 @@
 #include "vfx.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
-class StormMode : public DisplayMode
+class WirecubeMode : public DisplayMode
 {
 public:
 

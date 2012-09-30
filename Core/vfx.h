@@ -144,13 +144,16 @@ namespace draw
 class TextScroller
 {
 public:
-  TextScroller(const char* text);
+  TextScroller();
+  
+  void Init(const char* text);
 
-  void Render(byte* frame);
+  bool Render(byte* frame, ColourChoice cc);
 
 protected:
   const char* m_text;
 
+  Fix16   m_wave;
   int32_t m_len,
           m_scroll, 
           m_char, 

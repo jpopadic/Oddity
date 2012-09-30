@@ -8,11 +8,14 @@
 */
 
 #pragma once
+#include "oddity.h"
+#include "vfx.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
-#include "mode_boot.h"
-#include "mode_wirecube.h"
-#include "mode_flame.h"
-#include "mode_plasma.h"
-#include "mode_spark.h"
+class SparkMode : public DisplayMode
+{
+public:
 
+  virtual void init();
+  virtual bool tick(State &state);
+};
