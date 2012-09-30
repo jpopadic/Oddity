@@ -18,6 +18,9 @@
 Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY);
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g);
 
+// ---------------------------------------------------------------------------------------------------------------------
+Fix16 Perlin3(Fix16 x, Fix16 y, Fix16 z);
+Fix16 Perlin2(Fix16 x, Fix16 y);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // helpers to decode the R/G intensities out of a single pixel byte

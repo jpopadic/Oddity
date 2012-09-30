@@ -9,10 +9,6 @@
 
 #pragma once
 
-#ifndef _MSC_VER
-#pragma GCC optimize ("O3")
-#endif // 
-
 #include <stdlib.h>
 #include "fixedpoint.h"
 #include "RNG.h"
@@ -61,6 +57,7 @@ namespace Mode
     Wirecube,
     Flame,
     Plasma,
+    Noise,
     Spark,
       
     Count

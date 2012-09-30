@@ -142,6 +142,9 @@
     <ClInclude Include="Core\mode_spark.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\mode_noise.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NinjaLib\GDITools.cpp">
@@ -230,6 +233,12 @@
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="Core\mode_spark.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\vfx_perlin.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\mode_noise.cpp">
       <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>

@@ -53,7 +53,7 @@ bool TextScroller::Render(byte* frame, ColourChoice cc)
   draw::FontGlyph(frame, c1, (int16_t)(-m_scroll) + 1, f1.asInt(), cc);
   draw::FontGlyph(frame, c2, (int16_t)(-m_scroll) + 15, f2.asInt(), cc);
 
-  m_wave += 0.15f;
+  m_wave += 0.2f;
 
   m_nextPixelCountdown --;
   if (m_nextPixelCountdown <= 0)

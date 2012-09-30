@@ -29,9 +29,10 @@ void oddity_init()
   gModeList[Mode::Wirecube] = new WirecubeMode();
   gModeList[Mode::Flame] = new FlameMode();
   gModeList[Mode::Plasma] = new PlasmaMode();
+  gModeList[Mode::Noise] = new NoiseMode();
   gModeList[Mode::Spark] = new SparkMode();
   
-  gMode = Mode::Boot;
+  gMode = Mode::Noise;
 
 #ifdef WIN32
   gRNG.reseed((uint32_t)time (NULL));

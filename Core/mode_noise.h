@@ -7,22 +7,15 @@
                            /____/   
 */
 
+#pragma once
 #include "oddity.h"
 #include "vfx.h"
-#include "mode_boot.h"
-
-
-TextScroller gBootScroller;
-
 
 // ---------------------------------------------------------------------------------------------------------------------
-void BootMode::init()
+class NoiseMode : public DisplayMode
 {
-  gBootScroller.Init(" THIS IS AWESOME! ");
-}
+public:
 
-// ---------------------------------------------------------------------------------------------------------------------
-bool BootMode::tick(State &state)
-{
-  return gBootScroller.Render(state.m_frame, Green);
-}
+  virtual void init();
+  virtual bool tick(State &state);
+};

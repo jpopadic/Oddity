@@ -24,7 +24,7 @@ int CLK = 7;
 int DATA = 6;
 int STROBE = 5;
 
-#define FRAME_TIME 50
+#define FRAME_TIME 60
 
 
 //

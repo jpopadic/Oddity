@@ -61,6 +61,7 @@ void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g)
   byte B[] = { 0, 0, 0, 1, 2, 3, 3, 3, 3, 2, 1, 1 };
 
   int index = (t * fix16_from_float(halfGradient?6.0f:12.0f)).asInt(); 
+  index = abs(index);
   index %= 12;
     
   if (redFirst)

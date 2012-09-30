@@ -14,5 +14,6 @@
 #include "mode_wirecube.h"
 #include "mode_flame.h"
 #include "mode_plasma.h"
+#include "mode_noise.h"
 #include "mode_spark.h"
 
