@@ -58,14 +58,10 @@ Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY)
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g)
 {
   byte A[] = { 1, 2, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0 };
-  byte B[] = { 0, 0, 0, 1, 2, 3, 3, 3, 3, 2, 1, 0 };
+  byte B[] = { 0, 0, 0, 1, 2, 3, 3, 3, 3, 2, 1, 1 };
 
-  if (t < 0.0f) t = 0.0f;
-  if (t > 1.0f) t = 1.0f;
-
-  int index = (t * fix16_from_float(halfGradient?6.0f:12.0f)).asInt();
-  if (index > 11)
-    index = 11;
+  int index = (t * fix16_from_float(halfGradient?6.0f:12.0f)).asInt(); 
+  index %= 12;
     
   if (redFirst)
   {

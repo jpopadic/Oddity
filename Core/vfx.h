@@ -12,6 +12,9 @@
 #include "oddity.h"
 #include "fxp3d.h"
 
+#define oMIN(a,b)	(((a)<(b))?(a):(b))	
+#define oMAX(a,b)	(((a)>(b))?(a):(b))	
+
 Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY);
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g);
 

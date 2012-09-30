@@ -131,6 +131,12 @@ public:
 
   static inline Fix16 abs(const Fix16& v) { return Fix16( (v.value ^ (v.value >> 31)) - (v.value >> 31) ); }
 
+  inline Fix16  sinV(Fix16 v) const { return Fix16(fix16_sin(fix16_add(value, v)));  }
+  inline Fix16  cosV(Fix16 v) const { return Fix16(fix16_cos(fix16_add(value, v)));  }
+  inline Fix16  sinM(Fix16 m) const { return Fix16(fix16_sin(fix16_mul(value, m)));  }
+  inline Fix16  cosM(Fix16 m) const { return Fix16(fix16_cos(fix16_mul(value, m)));  }
+  inline Fix16  sinMV(Fix16 m, Fix16 v) const { return Fix16(fix16_sin(fix16_mul(fix16_add(value, v), m)));  }
+  inline Fix16  cosMV(Fix16 m, Fix16 v) const { return Fix16(fix16_cos(fix16_mul(fix16_add(value, v), m)));  }
 };
 
 #define XORByteSwap(a, b)         (((a) == (b)) || (((a) ^= (b)), ((b) ^= (a)), ((a) ^= b)))

@@ -20,8 +20,8 @@ static bool gRed;
 void FlameMode::init()
 {
   ZeroFrame(gGlowBuffer);
-  gDecay = 0.22f;
-  gRed = false;
+  gDecay = 0.223f;
+  gRed =  gRNG.genBool();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ bool FlameMode::tick(State &state)
     gRed = !gRed;
 
   const byte Rr[] = { 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };
-  const byte Gr[] = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3 };
+  const byte Gr[] = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3 };
 
   const byte Rg[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 3 };
   const byte Gg[] = { 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };

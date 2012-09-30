@@ -146,8 +146,8 @@ cNinjaLED *createNinjaLED(HWND hwHost)
   {
     for (int g=0; g<4; g++)
     {
-      int led_red = 40 + (r * 70);
-      int led_green = 40 + (g * 70);
+      int led_red = 20 + (r * 75);
+      int led_green = 20 + (g * 75);
 
       ledColors[r][g] = RGB(led_red, led_green, 0);
     }

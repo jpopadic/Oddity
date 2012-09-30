@@ -11,8 +11,11 @@
 #include "mode.h"
 #include "vfx.h"
 
+#ifdef WIN32
+#include <time.h>
+#endif 
 
-RNG gRNG(1024);
+RNG gRNG(5);
 
 static DisplayMode* gModeList[Mode::Count];
 static Mode::Enum   gMode;
@@ -24,8 +27,14 @@ void oddity_init()
 {
   gModeList[Mode::Boot] = new BootMode();
   gModeList[Mode::Flame] = new FlameMode();
+  gModeList[Mode::Plasma] = new PlasmaMode();
+  gModeList[Mode::Storm] = new StormMode();
+  
+  gMode = Mode::Storm;
 
-  gMode = Mode::Boot;
+#ifdef WIN32
+  gRNG.reseed((uint32_t)time (NULL));
+#endif
 
   gModeList[gMode]->init();
 }

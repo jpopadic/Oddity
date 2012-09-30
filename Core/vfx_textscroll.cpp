@@ -26,8 +26,6 @@ void TextScroller::Render(byte* frame)
   char c1 = m_text[m_char];
   char c2 = m_text[(m_char + 1) % m_len];
 
-  int lsc = m_scroll;
-
   draw::FontGlyph(frame, c1, (int16_t)(-m_scroll), 0, Orange);
   draw::FontGlyph(frame, c2, (int16_t)(-m_scroll) + 16, 0, Orange);
 

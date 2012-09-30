@@ -38,9 +38,9 @@ static ColourChoice ccCycle;
 // ---------------------------------------------------------------------------------------------------------------------
 void BootMode::init()
 {
-  rotX = (fix16_t)gRNG.genUInt32(0, 0xffff);
-  rotY = (fix16_t)gRNG.genUInt32(0, 0xffff);
-  rotZ = (fix16_t)gRNG.genUInt32(0, 0xffff);
+  rotX = (fix16_t)gRNG.genUInt32(0, 0xfffff);
+  rotY = (fix16_t)gRNG.genUInt32(0, 0xfffff);
+  rotZ = (fix16_t)gRNG.genUInt32(0, 0xfffff);
   distPulse = 0.0f;
 
   ccCycle = (ColourChoice)gRNG.genUInt32(0, Yellow);
