@@ -38,7 +38,7 @@ bool SparkMode::tick(State &state)
   if (state.m_counter > 300)
     return false;
 
-  Fix16 boundMin(0.0f), boundMax(16.0f), invert(-0.9f), decay(0.98f), invertDecayed(-0.8f), vel(2.0f);
+  Fix16 boundMin(0.0f), boundMax((int16_t)FRAME_WIDTH), invert(-0.9f), decay(0.98f), invertDecayed(-0.8f), vel(2.0f);
 
   int spawnPerFrame = 2;
 

@@ -32,7 +32,7 @@ void oddity_init()
   gModeList[Mode::Noise] = new NoiseMode();
   gModeList[Mode::Spark] = new SparkMode();
   
-  gMode = Mode::Noise;
+  gMode = Mode::Boot;
 
 #ifdef WIN32
   gRNG.reseed((uint32_t)time (NULL));

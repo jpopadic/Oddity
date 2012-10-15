@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.K.) resources
+// English (United Kingdom) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -52,15 +50,15 @@ END
 // Dialog
 //
 
-IDD_HOST DIALOGEX 0, 0, 225, 270
+IDD_HOST DIALOGEX 0, 0, 409, 396
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Oddity LED Matrix Emulator"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CONTROL         "http://bringtheawesome.tumblr.com/",IDC_FRAME1,
-                    "ninjaFrame",WS_TABSTOP,7,4,211,15
-    CONTROL         "Quit",IDC_EXITODD,"ninjaButton",WS_TABSTOP,152,240,66,23
-    CONTROL         "",IDC_LED,"ninjaLED",WS_TABSTOP,7,28,211,188
+                    "ninjaFrame",WS_TABSTOP,7,4,395,15
+    CONTROL         "Quit",IDC_EXITODD,"ninjaButton",WS_TABSTOP,336,366,66,23
+    CONTROL         "",IDC_LED,"ninjaLED",WS_TABSTOP,7,28,395,316
 END
 
 
@@ -70,20 +68,20 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_HOST, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 218
+        RIGHTMARGIN, 402
         TOPMARGIN, 4
-        BOTTOMMARGIN, 263
+        BOTTOMMARGIN, 389
         HORZGUIDE, 19
     END
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // English (U.K.) resources
+#endif    // English (United Kingdom) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

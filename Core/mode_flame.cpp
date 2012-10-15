@@ -81,11 +81,15 @@ bool FlameMode::tick(State &state)
     }
   }
 
-  for (int i=0; i<4; i++)
-    gGlowBuffer[ (16 * FRAME_HEIGHT) + (gRNG.genUInt32(0, 15)) ] = (int8_t)gRNG.genInt32(10, 28);
+  int seedCount = FRAME_HEIGHT >> 2;
+  int douseCount = seedCount >> 1;
+  int xmax = FRAME_WIDTH - 1;
 
-  for (int i=0; i<2; i++)
-    gGlowBuffer[ (gRNG.genUInt32(0, 15) * FRAME_HEIGHT) + (gRNG.genUInt32(0, 15)) ] = 0;
+  for (int i=0; i<seedCount; i++)
+    gGlowBuffer[ (FRAME_WIDTH * FRAME_HEIGHT) + (gRNG.genUInt32(0, xmax)) ] = (int8_t)gRNG.genInt32(10, 28);
+
+  for (int i=0; i<douseCount; i++)
+    gGlowBuffer[ (gRNG.genUInt32(0, xmax) * FRAME_HEIGHT) + (gRNG.genUInt32(0, xmax)) ] = 0;
 
   return true;
 }

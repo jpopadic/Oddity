@@ -87,9 +87,9 @@ void draw::FontGlyph(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice c
 
   byte r, g;
   int idx = 0;
-  for (int y=0; y<FRAME_HEIGHT; y++)
+  for (int y=0; y<16; y++)
   {
-    for (int x=0; x<FRAME_WIDTH; x++)
+    for (int x=0; x<16; x++)
     {
       GetBasicColour((int16_t)fontBuf[idx], cc, r, g);
       setLED(frame, x + fx, y + fy, r, g);

@@ -17,8 +17,8 @@
 // assumes fixed 16x16 RG configuration, 2-bits per pixel.
 //
 // frame stored 1-byte per pixel (XXRR XXGG)
-#define FRAME_WIDTH  16
-#define FRAME_HEIGHT 16
+#define FRAME_WIDTH  32
+#define FRAME_HEIGHT 32
 #define FRAME_SIZE FRAME_WIDTH * FRAME_HEIGHT
 
 #ifdef _MSC_VER
