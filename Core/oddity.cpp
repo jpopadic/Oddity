@@ -8,54 +8,36 @@
 */
 
 #include "oddity.h"
-#include "mode.h"
 #include "vfx.h"
 
 #ifdef WIN32
 #include <time.h>
 #endif 
 
-RNG gRNG(5);
-
-static DisplayMode* gModeList[Mode::Count];
-static Mode::Enum   gMode;
-
-static uint32_t   gFrameCounter = 0;
+namespace vfx
+{
 
 // ---------------------------------------------------------------------------------------------------------------------
-void oddity_init()
+void init(FXState& state)
 {
-  gModeList[Mode::Boot] = new BootMode();
-  gModeList[Mode::Wirecube] = new WirecubeMode();
-  gModeList[Mode::Flame] = new FlameMode();
-  gModeList[Mode::Plasma] = new PlasmaMode();
-  gModeList[Mode::Noise] = new NoiseMode();
-  gModeList[Mode::Spark] = new SparkMode();
+  state.counter = 0;
   
-  gMode = Mode::Noise;
-
-#ifdef WIN32
-  gRNG.reseed((uint32_t)time (NULL));
-#endif
-
-  gModeList[gMode]->init();
+  for(int i = 0; i < Constants::MemoryPool; ++i)
+    state.store[i] = 0xFF;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-bool oddity_tick(byte* frame, const hw_inputs& inputs)
+bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 {
-  State tickState;
-  tickState.m_frame = frame;
-  tickState.m_inputs = inputs;
-  tickState.m_counter = gFrameCounter ++;
+  static uint16_t ff = 0;
+  ff += input.dialChange[0];
 
-  if (!gModeList[gMode]->tick(tickState))
-  {
-    gMode = (Mode::Enum)( (gMode + 1) % Mode::Count );
-    gModeList[gMode]->init();
-
-    gFrameCounter = 0;
-  }
-
+  draw::FontGlyph8x8(output.frame, 'A', ff, 0, Lime);
+  draw::FontGlyph8x8(output.frame, '6', 8, 0, Lime);
+  draw::FontGlyph8x8(output.frame, '0', 0, 8, Lime);
+  draw::FontGlyph8x8(output.frame, '1', 8, 8, Lime);
   return true;
 }
+
+} // namespace vfx
+

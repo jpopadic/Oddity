@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "oddity.h"
 
+//----------------------------------------------------------------------------------------------------------------------
 // hax
 extern "C"
 {
@@ -10,61 +11,71 @@ void _exit(int status) {}
 int _kill(pid_t pid, int sig) { return 0; }
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 HardwareSPI spi(1);
 
 HardwareTimer displayTimer(1);
 HardwareTimer frameTimer(2);
 
-// column data pins
-int LE = 9;
-int OE = 8;
 
-// column driver pins
-int CLK = 7;
-int DATA = 6;
-int STROBE = 5;
+enum Pins
+{
+  // column data pins
+  LE = 9,
+  OE = 8,
+
+  // column driver pins
+  CLK = 7,
+  DATA = 6,
+  STROBE = 5
+};
 
 #define FRAME_TIME 60
 
 
+//----------------------------------------------------------------------------------------------------------------------
 //
 // frame buffer stored as 6 bitmaps (2 colors x 3 color
 // intensities) ordered: R0 R1 R2 G0 G1 G2
 //
 // 32 bytes per pixel per color
-#define BITMAP_SIZE  (FRAME_WIDTH * FRAME_HEIGHT / 8)
+#define BITMAP_SIZE  (Constants::FrameWidth * Constants::FrameHeight / 8)
 #define BUFFER_SIZE  (BITMAP_SIZE * 6)
 #define GREEN_OFFSET (BITMAP_SIZE * 3)
 
-//
 // variables for display update
 int gIntensity;
 int gColumn;
 int gIntensityMap[] = { 50, 100, 150 }; // geometric 50, 150, 300
 
-//
-// buffer (double)
-void clearFrame(byte* frame);
-void clearBuffer(byte* buffer);
 
-byte buffer[BUFFER_SIZE * 2];
-void flipBuffer();
+//----------------------------------------------------------------------------------------------------------------------
+// double buffer
+byte buffer[BUFFER_SIZE * 2] __attribute__((section (".USER_FLASH")));
 byte* pFrontBuffer;
 byte* pBackBuffer;
 
-//
+inline void clearBuffer(byte* buffer)
+{
+  for(int i = 0; i < BUFFER_SIZE; ++i)
+    buffer[i] = 0;
+}
+
+inline void flipBuffer()
+{
+  byte* temp = pFrontBuffer;
+  pFrontBuffer = pBackBuffer;
+  pBackBuffer = temp; 
+}
+
+
+//----------------------------------------------------------------------------------------------------------------------
 // frame
 void loadFrame(byte* buffer, byte* frame);
 volatile boolean gHaveNewFrame;
-byte frame[FRAME_SIZE];
 
-//
-// Serial stuff
-char gSerialBuffer[32];
-int gSerialIndex;
-
-//
-// Encoder inputs!
+//----------------------------------------------------------------------------------------------------------------------
+// encoder inputs
 #define ENCODER_A_PIN_1 15
 #define ENCODER_A_PIN_2 16
 #define ENCODER_B_PIN_1 18
@@ -78,48 +89,55 @@ void handleEncoderC();
 volatile int analogIncA, analogIncB, analogIncC;
 int analogLastA, analogLastB, analogLastC;
 
-//
-// main code
 //----------------------------------------------------------------------------------------------------------------------
+static FrameOutput g_output __attribute__((section (".USER_FLASH")));
+static FXState     g_state  __attribute__((section (".USER_FLASH")));
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// main code
 void setup()
 {
   initialize();
+  g_output.clear();
   
-  clearFrame(frame);
-  loadFrame(pBackBuffer, frame);
-  flipBuffer();
-  
-  oddity_init();
+  vfx::init(g_state);
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 void loop()
 {
   if (gHaveNewFrame)
     return;
   
+  FrameInput inputs;
+
+  // work out changes from the encoders
   int alA = analogIncA;
   int alB = analogIncB;
-  int alC = analogIncC;
-  
-  hw_inputs inputs;
-  inputs.encoderChange[0] = (alA - analogLastA);
-  inputs.encoderChange[1] = (alB - analogLastB);
-  inputs.encoderChange[2] = (alC - analogLastC);
+  int alC = analogIncC;  
+  inputs.dialChange[0] = (alA - analogLastA);
+  inputs.dialChange[1] = (alB - analogLastB);
+  inputs.dialChange[2] = (alC - analogLastC);
   analogLastA = alA;
   analogLastB = alB;
   analogLastC = alC;
   
+
+  g_state.counter ++;
+
+  // clear the frame
+  g_output.clear();
   
-  clearFrame(frame);
-  
-  if (oddity_tick(frame, inputs))
+  // tick the VFX core
+  if (vfx::tick(inputs, g_state, g_output))
   {
-    clearBuffer(pBackBuffer);
-    loadFrame(pBackBuffer, frame);
+    loadFrame(pBackBuffer, g_output.frame);
     gHaveNewFrame = true;
   }
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 void updateFrame()
 {
   if(gHaveNewFrame == true)
@@ -134,6 +152,7 @@ void updateFrame()
   frameTimer.resume();  
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 void initialize()
 {
   // set up some outputs
@@ -178,7 +197,6 @@ void initialize()
   clearBuffer(pFrontBuffer);
   clearBuffer(pBackBuffer);
   
-  gSerialIndex = 0;
   analogIncA = analogLastA =0;
   analogIncB = analogLastB =0;
   analogIncC = analogLastC =0;
@@ -221,6 +239,7 @@ void initialize()
   displayTimer.resume();  
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 void updateDisplay()
 {
   // disable row drivers
@@ -245,13 +264,16 @@ void updateDisplay()
   // push row data
   const int intensityOffset = gIntensity * BITMAP_SIZE;
   const int columnOffset    = gColumn * 2;
+
   // red first
   spi.write(pFrontBuffer[intensityOffset + columnOffset + 1]);
   spi.write(pFrontBuffer[intensityOffset + columnOffset]);
+
   // then green
   spi.write(pFrontBuffer[GREEN_OFFSET + intensityOffset + columnOffset + 1]);
   spi.write(pFrontBuffer[GREEN_OFFSET + intensityOffset + columnOffset]);
     
+
   // todo figure out how to know when write complete.
   // 4 nops appear to be about right.
   asm volatile("nop");
@@ -282,6 +304,7 @@ void updateDisplay()
   }
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 void handleEncoderA()
 {
   // pin ENCODER_A_PIN has changed, so something has happened.
@@ -294,7 +317,6 @@ void handleEncoderA()
   {
     analogIncA --;
   }
-  //SerialUSB.println(analogIncA);
 }
 void handleEncoderB()
 {
@@ -319,26 +341,8 @@ void handleEncoderC()
   }
 }
 
-void clearFrame(byte* frame)
-{
-  for(int i = 0; i < FRAME_SIZE; ++i)
-    frame[i] = 0;
-}
-
-void clearBuffer(byte* buffer)
-{
-  for(int i = 0; i < BUFFER_SIZE; ++i)
-    buffer[i] = 0;
-}
-
-void flipBuffer()
-{
-  byte* temp = pFrontBuffer;
-  pFrontBuffer = pBackBuffer;
-  pBackBuffer = temp; 
-}
-
-const byte addressing_red[FRAME_SIZE * 5] = { 
+//----------------------------------------------------------------------------------------------------------------------
+const static byte addressing_red[Constants::FrameSize * 5] = { 
 0, 1, 16, 48, 80, 129, 2, 0, 32, 64, 2, 4, 16, 48, 80, 131, 8, 0, 32, 64, 4, 16, 16, 48, 80, 133, 32, 0, 32, 64, 6, 64, 16, 48, 80, 135, 128, 0, 32, 64, 8, 1, 17, 49, 81, 137, 2, 1, 33, 65, 10, 4, 17, 49, 81, 139, 8, 1, 33, 65, 12, 16, 17, 49, 81, 141, 32, 1, 33, 65, 14, 64, 17, 49, 81, 
 143, 128, 1, 33, 65, 16, 1, 18, 50, 82, 145, 2, 2, 34, 66, 18, 4, 18, 50, 82, 147, 8, 2, 34, 66, 20, 16, 18, 50, 82, 149, 32, 2, 34, 66, 22, 64, 18, 50, 82, 151, 128, 2, 34, 66, 24, 1, 19, 51, 83, 153, 2, 3, 35, 67, 26, 4, 19, 51, 83, 155, 8, 3, 35, 67, 28, 16, 19, 51, 83, 157, 32, 3, 35, 67, 30, 64, 19, 51, 83, 
 159, 128, 3, 35, 67, 32, 1, 20, 52, 84, 161, 2, 4, 36, 68, 34, 4, 20, 52, 84, 163, 8, 4, 36, 68, 36, 16, 20, 52, 84, 165, 32, 4, 36, 68, 38, 64, 20, 52, 84, 167, 128, 4, 36, 68, 40, 1, 21, 53, 85, 169, 2, 5, 37, 69, 42, 4, 21, 53, 85, 171, 8, 5, 37, 69, 44, 16, 21, 53, 85, 173, 32, 5, 37, 69, 46, 64, 21, 53, 85, 
@@ -358,7 +362,8 @@ const byte addressing_red[FRAME_SIZE * 5] = {
 127, 128, 31, 63, 95, 
 };
 
-const byte addressing_green[FRAME_SIZE * 5] = { 
+//----------------------------------------------------------------------------------------------------------------------
+const static byte addressing_green[Constants::FrameSize * 5] = { 
 0, 2, 112, 144, 176, 1, 1, 112, 144, 176, 2, 4, 112, 144, 176, 3, 8, 112, 144, 176, 4, 16, 112, 144, 176, 5, 32, 112, 144, 176, 6, 64, 112, 144, 176, 7, 128, 112, 144, 176, 8, 1, 113, 145, 177, 9, 2, 113, 145, 177, 10, 4, 113, 145, 177, 11, 8, 113, 145, 177, 12, 16, 113, 145, 177, 13, 32, 113, 145, 177, 14, 64, 113, 145, 177, 
 15, 128, 113, 145, 177, 16, 2, 114, 146, 178, 17, 1, 114, 146, 178, 18, 4, 114, 146, 178, 19, 8, 114, 146, 178, 20, 16, 114, 146, 178, 21, 32, 114, 146, 178, 22, 64, 114, 146, 178, 23, 128, 114, 146, 178, 24, 1, 115, 147, 179, 25, 2, 115, 147, 179, 26, 4, 115, 147, 179, 27, 8, 115, 147, 179, 28, 16, 115, 147, 179, 29, 32, 115, 147, 179, 30, 64, 115, 147, 179, 
 31, 128, 115, 147, 179, 32, 2, 116, 148, 180, 33, 1, 116, 148, 180, 34, 4, 116, 148, 180, 35, 8, 116, 148, 180, 36, 16, 116, 148, 180, 37, 32, 116, 148, 180, 38, 64, 116, 148, 180, 39, 128, 116, 148, 180, 40, 1, 117, 149, 181, 41, 2, 117, 149, 181, 42, 4, 117, 149, 181, 43, 8, 117, 149, 181, 44, 16, 117, 149, 181, 45, 32, 117, 149, 181, 46, 64, 117, 149, 181, 
@@ -378,10 +383,11 @@ const byte addressing_green[FRAME_SIZE * 5] = {
 255, 128, 111, 143, 175, 
 };
 
+//----------------------------------------------------------------------------------------------------------------------
 void loadFrame(byte* buffer, byte* frame)
 {
   int adrG = 0, adrR = 0;
-  for(int i = 0; i < FRAME_SIZE; ++i)
+  for(int i = 0; i < Constants::FrameSize; ++i)
   { 
     byte pixel_r = frame[addressing_red[adrR ++]];
     byte pixel_g = frame[addressing_green[adrG ++]];
@@ -390,7 +396,7 @@ void loadFrame(byte* buffer, byte* frame)
     byte green = (pixel_g >> 4) & 0x0f;
 
     // some swapping stuff because the hardware is wired upside-down :-)
-    int offset = FRAME_SIZE / 2;
+    int offset = Constants::FrameSize / 2;
     if(i >= offset)
       i -= offset;
     else

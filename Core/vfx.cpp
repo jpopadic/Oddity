@@ -9,6 +9,7 @@
 
 #include "oddity.h"
 #include "vfx.h"
+#include "stdlib.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
 void setLED(byte* frame, int x, int y, byte r, byte g, bool additive, bool swapXY)
@@ -20,13 +21,13 @@ void setLED(byte* frame, int x, int y, byte r, byte g, bool additive, bool swapX
     x = t;
   }
 
-  if(x < 0 || x >= FRAME_WIDTH)
+  if(x < 0 || x >= Constants::FrameWidth)
     return;
     
-  if(y < 0 || y >= FRAME_HEIGHT)
+  if(y < 0 || y >= Constants::FrameHeight)
     return;    
 
-  byte &pixel = frame[y * FRAME_WIDTH + x];
+  byte &pixel = frame[y * Constants::FrameWidth + x];
   byte red, green;
   DecodeByte(pixel, red, green);
 
@@ -77,23 +78,45 @@ void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-extern const unsigned char* getFontGlyphData(char c);
+extern const unsigned char* getFontGlyphData16x16(char c);
 
-void draw::FontGlyph(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
+void draw::FontGlyph16x16(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
 {
-  const unsigned char* fontBuf = getFontGlyphData(c);
+  const unsigned char* fontBuf = getFontGlyphData16x16(c);
   if (!fontBuf)
     return;
 
   byte r, g;
   int idx = 0;
-  for (int y=0; y<FRAME_HEIGHT; y++)
+  for (int y=0; y<Constants::FrameHeight; y++)
   {
-    for (int x=0; x<FRAME_WIDTH; x++)
+    for (int x=0; x<Constants::FrameWidth; x++)
     {
       GetBasicColour((int16_t)fontBuf[idx], cc, r, g);
       setLED(frame, x + fx, y + fy, r, g);
       idx ++;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+extern const unsigned char* getFontGlyphData8x8(char c);
+
+void draw::FontGlyph8x8(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
+{
+  const unsigned char* fontBuf = getFontGlyphData8x8(c);
+  if (!fontBuf)
+    return;
+
+  byte r, g;
+  for (int x=0; x<8; x++)
+  {
+    for (int y=0; y<8; y++)
+    {
+      int set = fontBuf[y] & 1 << x;
+
+      GetBasicColour(set * 3, cc, r, g);
+      setLED(frame, x + fx, y + fy, r, g);
     }
   }
 }

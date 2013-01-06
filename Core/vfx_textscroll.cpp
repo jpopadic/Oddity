@@ -47,11 +47,11 @@ bool TextScroller::Render(byte* frame, ColourChoice cc)
   f2 = Fix16::sin(m_wave + f2) * 4.0f;
 
 
-  draw::FontGlyph(frame, c1, (int16_t)(-m_scroll), f3.asInt(), Red);
-  draw::FontGlyph(frame, c2, (int16_t)(-m_scroll) + 16, f4.asInt(), Red);
+  draw::FontGlyph16x16(frame, c1, (int16_t)(-m_scroll), f3.asInt(), Red);
+  draw::FontGlyph16x16(frame, c2, (int16_t)(-m_scroll) + 16, f4.asInt(), Red);
 
-  draw::FontGlyph(frame, c1, (int16_t)(-m_scroll) + 1, f1.asInt(), cc);
-  draw::FontGlyph(frame, c2, (int16_t)(-m_scroll) + 15, f2.asInt(), cc);
+  draw::FontGlyph16x16(frame, c1, (int16_t)(-m_scroll) + 1, f1.asInt(), cc);
+  draw::FontGlyph16x16(frame, c2, (int16_t)(-m_scroll) + 15, f2.asInt(), cc);
 
   m_wave += 0.2f;
 

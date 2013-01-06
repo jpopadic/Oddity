@@ -84,18 +84,6 @@
     <ClInclude Include="NinjaLib\winUtils.h">
       <Filter>NinjaLib</Filter>
     </ClInclude>
-    <ClInclude Include="Core\mode.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\mode_boot.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\mode_flame.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\mode_plasma.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\oddity.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -136,13 +124,7 @@
       <Filter>core\Utils</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Core\mode_wirecube.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\mode_spark.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\mode_noise.h">
+    <ClInclude Include="Core\oddity_memory.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
@@ -183,18 +165,6 @@
     <ClCompile Include="NinjaLib\winUtils.cpp">
       <Filter>NinjaLib</Filter>
     </ClCompile>
-    <ClCompile Include="Core\maxcarnage.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\mode_boot.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\mode_flame.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\mode_plasma.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\oddity.cpp">
       <Filter>core</Filter>
     </ClCompile>
@@ -229,16 +199,16 @@
       <Filter>core\Utils</Filter>
     </ClCompile>
     <ClCompile Include="Emu.cpp" />
-    <ClCompile Include="Core\mode_wirecube.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\mode_spark.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\vfx_perlin.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\mode_noise.cpp">
+    <ClCompile Include="Core\font_8x8.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\font_16x16.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\disp_ripple.cpp">
       <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>

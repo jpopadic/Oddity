@@ -40,14 +40,14 @@ inline void DecodeByteAdditive(byte pixel, byte &r, byte &g)
 template <typename _T>
 inline void ZeroFrame(_T* frame)
 {
-  for(int i = 0; i < FRAME_SIZE; ++i)
+  for(int i = 0; i < Constants::FrameSize; ++i)
     frame[i] = 0;
 }
 
 template <typename _Tf, typename _Tt>
 inline void CopyFrame(_Tf* from, _Tt* to)
 {
-  for(int i = 0; i < FRAME_SIZE; ++i)
+  for(int i = 0; i < Constants::FrameSize; ++i)
     to[i] = from[i];
 }
 
@@ -139,7 +139,8 @@ namespace draw
   void WuLine(byte* frame, Fix16 x1, Fix16 y1, Fix16 x2, Fix16 y2, ColourChoice cc);
 
 
-  void FontGlyph(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
+  void FontGlyph16x16(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
+  void FontGlyph8x8(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
 
 } // namespace draw
 
