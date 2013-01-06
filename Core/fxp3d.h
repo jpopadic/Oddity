@@ -60,6 +60,8 @@ public:
     Fix16 sina_z = rotZ.sin();
     Fix16 cosa_z = rotZ.cos();
 
+    Fix16 halfViewSize(int16_t(FRAME_WIDTH >> 1));
+
     Fix16 _y = (y * cosa_x) - (z * sina_x);
     Fix16 _z = (y * sina_x) + (z * cosa_x);
 
@@ -70,8 +72,8 @@ public:
     Fix16 __y = (_x * sina_z) + (_y * cosa_z);
 
     Fix16 fac = fov / (dist + __z);
-    Fix16 nx = (__x * fac) + 8.0f;
-    Fix16 ny = (__y * fac * -1.0f) + 8.0f;
+    Fix16 nx = (__x * fac) + halfViewSize;
+    Fix16 ny = (__y * fac * -1.0f) + halfViewSize;
 
     return Fxp3D(nx, ny, Fix16(fix16_one));
   }

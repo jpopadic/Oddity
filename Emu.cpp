@@ -37,7 +37,7 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       createNinjaButton(GetDlgItem(hWnd,IDC_EXITODD),NULL,NJALIGN_CENTER,FALSE);
       setBaseHeavyStyle(GetDlgItem(hWnd,IDC_EXITODD),TRUE);
 
-      LEDdisplay = createNinjaLED(GetDlgItem(hWnd,IDC_LED));
+      LEDdisplay = createNinjaLED(GetDlgItem(hWnd,IDC_LED), FRAME_WIDTH);
 
       SetTimer(hWnd, 0x01, 20, NULL);
 

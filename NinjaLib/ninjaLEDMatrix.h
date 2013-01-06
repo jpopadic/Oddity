@@ -15,6 +15,8 @@ class cNinjaLED : public cNinjaControlBase
 {
 public:
 
+  cNinjaLED(sUInt32 _EdgeLen);
+
 	// storage for the image
 	sUInt32		iWidth,iHeight;
 
@@ -32,11 +34,12 @@ public:
 
 protected:
 
-  COLORREF  m_LEDs[16][16];
+  sUInt32   EdgeLen;
+  COLORREF  *m_LEDs;
 };
 
 // common creation and destruction functions for this control
 // image viewer is basic to instance, but then needs several setup calls (above in class)
-cNinjaLED *createNinjaLED(HWND hwHost);
+cNinjaLED *createNinjaLED(HWND hwHost, sUInt32 _EdgeLen);
 void destroyNinjaLED(HWND hwHost);
 cNinjaLED *getNinjaLED(HWND hwHost);

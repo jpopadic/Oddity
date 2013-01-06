@@ -88,9 +88,9 @@ void draw::FontGlyph16x16(byte* frame, char c, int16_t fx, int16_t fy, ColourCho
 
   byte r, g;
   int idx = 0;
-  for (int y=0; y<Constants::FrameHeight; y++)
+  for (int y=0; y<16; y++)
   {
-    for (int x=0; x<Constants::FrameWidth; x++)
+    for (int x=0; x<16; x++)
     {
       GetBasicColour((int16_t)fontBuf[idx], cc, r, g);
       setLED(frame, x + fx, y + fy, r, g);

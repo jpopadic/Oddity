@@ -84,8 +84,8 @@ void cNinjaLED::draw(HDC hdc)
   RECT checkTag;
   checkTag.top = 0;
   checkTag.left = 0;
-  checkTag.right = checkTag.left + (16 * 18) + 3 + 3;
-  checkTag.bottom = checkTag.top + (16 * 18) + 3 + 3;
+  checkTag.right = checkTag.left + (EdgeLen * (14)) + 3 + 3;
+  checkTag.bottom = checkTag.top + (EdgeLen * (14)) + 3 + 3;
 
   // create double buffer storage
   HDC hdcN	= CreateCompatibleDC(hdc);
@@ -94,16 +94,16 @@ void cNinjaLED::draw(HDC hdc)
 
   njColourRect(hdcN, &checkTag, RGB(0,0,0));
 
-  for (int y=0; y<16; y++)
+  for (sUInt32 y=0; y<EdgeLen; y++)
   {
-    for (int x=0; x<16; x++)
+    for (sUInt32 x=0; x<EdgeLen; x++)
     {
       // draw the checkbox tag
-      checkTag.top = 2 + (y * 18);
-      checkTag.left = 2 + (x * 18);
-      checkTag.right = checkTag.left + 16;
-      checkTag.bottom = checkTag.top + 16;
-      njColourRect(hdcN, &checkTag, m_LEDs[x][y]);
+      checkTag.top = 2 + (y * (14));
+      checkTag.left = 2 + (x * (14));
+      checkTag.right = checkTag.left + EdgeLen;
+      checkTag.bottom = checkTag.top + EdgeLen;
+      njColourRect(hdcN, &checkTag, m_LEDs[ (y * EdgeLen) + x ]);
     }
   }
 
@@ -115,17 +115,23 @@ void cNinjaLED::draw(HDC hdc)
 
 void cNinjaLED::decodeFramebuffer( sUInt8 *framebuffer )
 {
-  for (int y=0; y<16; y++)
+  for (sUInt32 y=0; y<EdgeLen; y++)
   {
-    for (int x=0; x<16; x++)
+    for (sUInt32 x=0; x<EdgeLen; x++)
     {
-      sUInt8 pixel = framebuffer[(y * 16) + x];
+      sUInt8 pixel = framebuffer[(y * EdgeLen) + x];
       sUInt8 red   = pixel & 0x0f;
       sUInt8 green = (pixel >> 4) & 0x0f;
 
-      m_LEDs[x][y] = ledColors[red][green];
+      m_LEDs[(y * EdgeLen) + x] = ledColors[red][green];
     }
   }
+}
+
+cNinjaLED::cNinjaLED( sUInt32 _EdgeLen )
+{
+  m_LEDs = new COLORREF[_EdgeLen * _EdgeLen];
+  EdgeLen = _EdgeLen;
 }
 
 
@@ -134,10 +140,10 @@ void cNinjaLED::decodeFramebuffer( sUInt8 *framebuffer )
 | insert it into the host's userdata entry
 \*===========================================================================*/
 
-cNinjaLED *createNinjaLED(HWND hwHost)
+cNinjaLED *createNinjaLED(HWND hwHost, sUInt32 _EdgeLen)
 {
   // create new manager
-  cNinjaLED *cLED = new cNinjaLED();
+  cNinjaLED *cLED = new cNinjaLED(_EdgeLen);
   cLED->resetBase();
 
   cLED->hwHost = hwHost;
