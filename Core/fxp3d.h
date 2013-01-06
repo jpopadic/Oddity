@@ -60,7 +60,7 @@ public:
     Fix16 sina_z = rotZ.sin();
     Fix16 cosa_z = rotZ.cos();
 
-    Fix16 halfViewSize(int16_t(FRAME_WIDTH >> 1));
+    Fix16 halfViewSize(int16_t(Constants::FrameWidth >> 1));
 
     Fix16 _y = (y * cosa_x) - (z * sina_x);
     Fix16 _z = (y * sina_x) + (z * cosa_x);

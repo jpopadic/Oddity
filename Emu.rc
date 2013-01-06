@@ -57,11 +57,11 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CONTROL         "http://bringtheawesome.tumblr.com/",IDC_FRAME1,
                     "ninjaFrame",WS_TABSTOP,7,4,211,15
-    CONTROL         "Quit",IDC_EXITODD,"ninjaButton",WS_TABSTOP,152,261,66,23
-    CONTROL         "",IDC_LED,"ninjaLED",WS_TABSTOP,7,28,211,188
-    CONTROL         "",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS | UDS_HORZ | UDS_HOTTRACK | WS_TABSTOP,7,226,37,17
-    CONTROL         "",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS | UDS_HORZ | UDS_HOTTRACK | WS_TABSTOP,92,226,37,17
-    CONTROL         "",IDC_SPIN3,"msctls_updown32",UDS_ARROWKEYS | UDS_HORZ | UDS_HOTTRACK | WS_TABSTOP,181,226,37,17
+    CONTROL         "Quit",IDC_EXITODD,"ninjaButton",WS_TABSTOP,336,4,66,23
+    CONTROL         "",IDC_LED,"ninjaLED",WS_TABSTOP,7,45,211,188
+    CONTROL         "",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS | UDS_HORZ | UDS_HOTTRACK | WS_TABSTOP,7,22,37,17
+    CONTROL         "",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS | UDS_HORZ | UDS_HOTTRACK | WS_TABSTOP,92,22,37,17
+    CONTROL         "",IDC_SPIN3,"msctls_updown32",UDS_ARROWKEYS | UDS_HORZ | UDS_HOTTRACK | WS_TABSTOP,181,22,37,17
 END
 
 

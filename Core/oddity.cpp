@@ -10,9 +10,9 @@
 #include "oddity.h"
 #include "vfx.h"
 
-#ifdef WIN32
-#include <time.h>
-#endif 
+extern void ripple_init(FXState& state);
+extern bool ripple_tick(FrameOutput& output, FXState& state);
+
 
 namespace vfx
 {
@@ -24,18 +24,15 @@ void init(FXState& state)
   
   for(int i = 0; i < Constants::MemoryPool; ++i)
     state.store[i] = 0xFF;
+
+  ripple_init(state);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 {
-  static uint16_t ff = 0;
-  ff += input.dialChange[0];
+  ripple_tick(output, state);
 
-  draw::FontGlyph8x8(output.frame, 'A', ff, 0, Lime);
-  draw::FontGlyph8x8(output.frame, '6', 8, 0, Lime);
-  draw::FontGlyph8x8(output.frame, '0', 0, 8, Lime);
-  draw::FontGlyph8x8(output.frame, '1', 8, 8, Lime);
   return true;
 }
 
