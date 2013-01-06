@@ -26,6 +26,9 @@ struct RippleData
   Fix16*    destination;
 };
 
+#ifdef _MSC_VER
+static_assert(sizeof(RippleData) < Constants::MemoryPool, "RippleData too big for global memory pool");
+#endif // _MSC_VER
 
 // ---------------------------------------------------------------------------------------------------------------------
 void ripple_init(FXState& state)

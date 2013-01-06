@@ -10,12 +10,58 @@
 #include "oddity.h"
 #include "vfx.h"
 
-extern void ripple_init(FXState& state);
-extern bool ripple_tick(FrameOutput& output, FXState& state);
+
+// ---------------------------------------------------------------------------------------------------------------------
+// list of all known display modes (fx modules)
+#define DISP(_act) \
+  _act(ripple)
 
 
+// ---------------------------------------------------------------------------------------------------------------------
+// enum magic to turn the list above into useful code / ids / etc
+#define PREDEC(_disp) \
+  extern void _disp##_init(FXState& state); \
+  extern bool _disp##_tick(FrameOutput& output, FXState& state);
+
+#define ENUMID(_disp) \
+  _disp,
+
+#define DOINIT(_disp) \
+  case _disp: _disp##_init(state);
+#define DOTICK(_disp) \
+  case _disp: _disp##_tick(output, state);
+
+DISP(PREDEC)
+struct DisplayMode
+{
+  enum Enum
+  {
+    DISP(ENUMID)
+    Count
+  };
+
+  static void doInitFor(Enum e, FXState& state)
+  {
+    switch (e)
+    {
+      DISP(DOINIT)      
+    }
+  }
+  static void doTickFor(Enum e, FrameOutput& output, FXState& state)
+  {
+    switch (e)
+    {
+      DISP(DOTICK)      
+    }
+  }
+};
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 namespace vfx
 {
+
+DisplayMode::Enum gCurrentDisplayMode = DisplayMode::ripple;
 
 // ---------------------------------------------------------------------------------------------------------------------
 void init(FXState& state)
@@ -25,13 +71,13 @@ void init(FXState& state)
   for(int i = 0; i < Constants::MemoryPool; ++i)
     state.store[i] = 0xFF;
 
-  ripple_init(state);
+  DisplayMode::doInitFor(gCurrentDisplayMode, state);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 {
-  ripple_tick(output, state);
+  DisplayMode::doTickFor(gCurrentDisplayMode, output, state);
 
   return true;
 }
