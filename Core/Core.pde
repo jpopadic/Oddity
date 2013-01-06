@@ -51,7 +51,7 @@ int gIntensityMap[] = { 50, 100, 150 }; // geometric 50, 150, 300
 
 //----------------------------------------------------------------------------------------------------------------------
 // double buffer
-byte buffer[BUFFER_SIZE * 2] __attribute__((section (".USER_FLASH")));
+byte buffer[BUFFER_SIZE * 2] __FLASH__;
 byte* pFrontBuffer;
 byte* pBackBuffer;
 
@@ -90,8 +90,8 @@ volatile int analogIncA, analogIncB, analogIncC;
 int analogLastA, analogLastB, analogLastC;
 
 //----------------------------------------------------------------------------------------------------------------------
-static FrameOutput g_output __attribute__((section (".USER_FLASH")));
-static FXState     g_state  __attribute__((section (".USER_FLASH")));
+static FrameOutput g_output __FLASH__;
+static FXState     g_state  __FLASH__;
 
 
 //----------------------------------------------------------------------------------------------------------------------
