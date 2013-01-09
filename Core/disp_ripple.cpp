@@ -10,7 +10,7 @@
 #include "oddity.h"
 #include "vfx.h"
 
-struct RippleData
+struct EffectData
 {
   enum
   {
@@ -27,31 +27,31 @@ struct RippleData
 };
 
 #ifdef _MSC_VER
-static_assert(sizeof(RippleData) < Constants::MemoryPool, "RippleData too big for global memory pool");
+static_assert(sizeof(EffectData) < Constants::MemoryPool, "EffectData too big for global memory pool");
 #endif // _MSC_VER
 
 // ---------------------------------------------------------------------------------------------------------------------
 void ripple_init(FXState& state)
 {
-  RippleData* data = (RippleData*)state.store;
+  EffectData* data = (EffectData*)state.store;
 
   Fix16 zero = fix16_from_int(0);
 
   data->dropFrequency = 3; // percent
   data->damping = 0.92f;
-  for(int i = 0; i < RippleData::BufferSize * 2; ++i)
+  for(int i = 0; i < EffectData::BufferSize * 2; ++i)
   {
     data->buffer[i] = zero;
   }
   data->source = data->buffer;
-  data->destination = &data->buffer[RippleData::BufferSize];
+  data->destination = &data->buffer[EffectData::BufferSize];
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 bool ripple_tick(FrameOutput& output, FXState& state)
 {
-  RippleData* data = (RippleData*)state.store;
+  EffectData* data = (EffectData*)state.store;
 
 
   Fix16 zero = fix16_from_int(0);
@@ -60,28 +60,28 @@ bool ripple_tick(FrameOutput& output, FXState& state)
 
   if(state.rng.genUInt32(0, 100) < data->dropFrequency)
   {
-    data->source[state.rng.genUInt32(1, RippleData::Height-2) * RippleData::Width + state.rng.genUInt32(1, RippleData::Width-2)] = fix16_one;
+    data->source[state.rng.genUInt32(1, EffectData::Height-2) * EffectData::Width + state.rng.genUInt32(1, EffectData::Width-2)] = fix16_one;
   }
 
-  for(int x = 1; x < RippleData::Width - 1; x++) 
+  for(int x = 1; x < EffectData::Width - 1; x++) 
   {
-    for(int y = 1; y < RippleData::Height - 1; y++)
+    for(int y = 1; y < EffectData::Height - 1; y++)
     {
       // last last height as proxy for velocity.
-      Fix16 velocity = -data->destination[y * RippleData::Width + x];
+      Fix16 velocity = -data->destination[y * EffectData::Width + x];
 
       // average local neighborhood.
       // todo taking diagonal neigbors x 0.7 makes stuff rounder.
       Fix16 smoothed;
-      smoothed = data->source[y * RippleData::Width + x + 1];   // x+1, y
-      smoothed += data->source[y * RippleData::Width + x - 1];   // x-1, y
-      smoothed += data->source[(y + 1) * RippleData::Width + x]; // x, y+1
-      smoothed += data->source[(y - 1) * RippleData::Width + x]; // x, y-1
+      smoothed = data->source[y * EffectData::Width + x + 1];   // x+1, y
+      smoothed += data->source[y * EffectData::Width + x - 1];   // x-1, y
+      smoothed += data->source[(y + 1) * EffectData::Width + x]; // x, y+1
+      smoothed += data->source[(y - 1) * EffectData::Width + x]; // x, y-1
 
-      smoothed += data->source[(y - 1) * RippleData::Width + (x - 1)] * edgeMult;
-      smoothed += data->source[(y - 1) * RippleData::Width + (x + 1)] * edgeMult;
-      smoothed += data->source[(y + 1) * RippleData::Width + (x - 1)] * edgeMult;
-      smoothed += data->source[(y + 1) * RippleData::Width + (x + 1)] * edgeMult;
+      smoothed += data->source[(y - 1) * EffectData::Width + (x - 1)] * edgeMult;
+      smoothed += data->source[(y - 1) * EffectData::Width + (x + 1)] * edgeMult;
+      smoothed += data->source[(y + 1) * EffectData::Width + (x - 1)] * edgeMult;
+      smoothed += data->source[(y + 1) * EffectData::Width + (x + 1)] * edgeMult;
 
       smoothed *= divFour;
 
@@ -92,7 +92,7 @@ bool ripple_tick(FrameOutput& output, FXState& state)
       newHeight *= data->damping;
       
       // store it...
-      data->destination[y * RippleData::Width + x] = newHeight;
+      data->destination[y * EffectData::Width + x] = newHeight;
       
       // adjustments for drawing...
       newHeight = (newHeight * fix16_from_float(2.5f));
@@ -106,7 +106,7 @@ bool ripple_tick(FrameOutput& output, FXState& state)
       byte c = (byte)fix16_to_int(newHeight * fix16_from_int(15));
       
       byte r, g;
-      GetBasicColour(newHeight, Green, r, g);
+      GetBasicColour(newHeight, Red, r, g);
       setLED(output.frame, x-1, y-1, r, g, 0);
     }
   }
