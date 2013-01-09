@@ -27,15 +27,22 @@ void setLED(byte* frame, int x, int y, byte r, byte g, bool additive, bool swapX
   if(y < 0 || y >= Constants::FrameHeight)
     return;    
 
-  byte &pixel = frame[y * Constants::FrameWidth + x];
+  byte &pixel = frame[y * Constants::FrameWidth + x];  
   byte red, green;
-  DecodeByte(pixel, red, green);
 
+  if (additive)
+  {
+    DecodeByte(pixel, red, green);
 
-  red += r;
-  green += g;
-
-
+    red += r;
+    green += g;
+  }
+  else
+  {
+    red = r;
+    green = g;
+  }
+  
   if (red > 3)
     red = 3;
   if (green > 3)
