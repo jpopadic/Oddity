@@ -18,9 +18,15 @@
  * Fetched from: http://dimensionalrift.homelinux.net/combuster/mos3/?p=viewsource&file=/modules/gfx/font8_8.asm
  **/
 
+#ifdef _MSC_VER
+#define __FLASH__
+#else
+#define __FLASH__ __attribute__((section (".USER_FLASH")))
+#endif // _MSC_VER
+
 // Constant: font8x8_basic
 // Contains an 8x8 font map for unicode points U+0000 - U+007F (basic latin)
-const unsigned char font8x8_basic[128][8] = {
+static const unsigned char font8x8_basic[128][8] __FLASH__ = {
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // U+0000 (nul)
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // U+0001
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // U+0002
