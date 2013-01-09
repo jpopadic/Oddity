@@ -211,6 +211,9 @@
     <ClCompile Include="Core\disp_ripple.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\disp_plasma.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Emu.rc" />
