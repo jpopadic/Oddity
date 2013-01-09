@@ -51,7 +51,7 @@ int gIntensityMap[] = { 50, 100, 150 }; // geometric 50, 150, 300
 
 //----------------------------------------------------------------------------------------------------------------------
 // double buffer
-byte buffer[BUFFER_SIZE * 2] __FLASH__;
+byte buffer[BUFFER_SIZE * 2];
 byte* pFrontBuffer;
 byte* pBackBuffer;
 
@@ -90,8 +90,8 @@ volatile int analogIncA, analogIncB, analogIncC;
 int analogLastA, analogLastB, analogLastC;
 
 //----------------------------------------------------------------------------------------------------------------------
-static FrameOutput g_output __FLASH__;
-static FXState     g_state  __FLASH__;
+static FrameOutput g_output;
+static FXState     g_state;
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -132,6 +132,7 @@ void loop()
   // tick the VFX core
   if (vfx::tick(inputs, g_state, g_output))
   {
+    clearBuffer(pBackBuffer);
     loadFrame(pBackBuffer, g_output.frame);
     gHaveNewFrame = true;
   }

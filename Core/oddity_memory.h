@@ -30,7 +30,7 @@ struct Constants
     FrameSize   = FrameWidth * FrameHeight,
 
     // size of the shared global memory pool
-    MemoryPool  = 32 * 1024
+    MemoryPool  = 8 * 1024
   };
 };
 
