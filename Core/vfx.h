@@ -17,6 +17,7 @@
 
 Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY);
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g);
+void ColourBand(Fix16 t, byte& r, byte& g);
 
 // ---------------------------------------------------------------------------------------------------------------------
 Fix16 Perlin3(Fix16 x, Fix16 y, Fix16 z);
@@ -24,16 +25,16 @@ Fix16 Perlin2(Fix16 x, Fix16 y);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // helpers to decode the R/G intensities out of a single pixel byte
-inline void DecodeByte(byte pixel, byte &r, byte &g)
+inline void DecodeByte(pixel LEDpixel, byte &r, byte &g)
 {
-  r = pixel & 0x0f;
-  g = (pixel >> 4) & 0x0f;
+  r = LEDpixel & 0x0f;
+  g = (LEDpixel >> 4) & 0x0f;
 }
 
-inline void DecodeByteAdditive(byte pixel, byte &r, byte &g)
+inline void DecodeByteAdditive(pixel LEDpixel, byte &r, byte &g)
 {
-  r += pixel & 0x0f;
-  g += (pixel >> 4) & 0x0f;
+  r += LEDpixel & 0x0f;
+  g += (LEDpixel >> 4) & 0x0f;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -53,7 +54,7 @@ inline void CopyFrame(_Tf* from, _Tt* to)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // the long-form way to set a single LED value, with overflow protection and so on
-void setLED(byte* frame, int x, int y, byte r, byte g, bool additive = false, bool swapXY = false);
+void setLED(pixel* frame, int x, int y, byte r, byte g, bool additive = false, bool swapXY = false);
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -64,13 +65,14 @@ enum ColourChoice
   Green,
   Lime,
   Orange,
-  Yellow
+  Yellow,
+  Black
 };
 
 inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
 {
-  if (index > 3)
-    index = 3;
+  if (index > 4)
+    index = 4;
   if (index < 0)
     index = 0;
 
@@ -78,8 +80,8 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
   {
   case Red:
     {
-      const byte R[] = { 0, 1, 2, 3 };
-      const byte G[] = { 0, 0, 0, 0 };
+      const byte R[] = { 0, 1, 2, 3, 4 };
+      const byte G[] = { 0, 0, 0, 0, 0 };
 
       r = R[index];
       g = G[index];
@@ -87,8 +89,8 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
     break;
   case Green:
     {
-      const byte R[] = { 0, 0, 0, 0 };
-      const byte G[] = { 0, 1, 2, 3 };
+      const byte R[] = { 0, 0, 0, 0, 0 };
+      const byte G[] = { 0, 1, 2, 3, 4 };
 
       r = R[index];
       g = G[index];
@@ -96,8 +98,8 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
     break;
   case Lime:
     {
-      const byte R[] = { 0, 1, 1, 2 };
-      const byte G[] = { 0, 1, 2, 3 };
+      const byte R[] = { 0, 1, 1, 2, 3 };
+      const byte G[] = { 0, 1, 2, 3, 4 };
 
       r = R[index];
       g = G[index];
@@ -105,8 +107,8 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
     break;
   case Orange:
     {
-      const byte R[] = { 0, 1, 2, 3 };
-      const byte G[] = { 0, 0, 0, 3 };
+      const byte R[] = { 0, 1, 2, 3, 4 };
+      const byte G[] = { 0, 0, 0, 3, 4 };
 
       r = R[index];
       g = G[index];
@@ -114,11 +116,17 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
     break;
   case Yellow:
     {
-      const byte R[] = { 0, 1, 2, 3 };
-      const byte G[] = { 0, 1, 2, 3 };
+      const byte R[] = { 0, 1, 2, 3, 4 };
+      const byte G[] = { 0, 1, 2, 3, 4 };
 
       r = R[index];
       g = G[index];
+    }
+    break;
+  case Black:
+    {
+      r = 0;
+      g = 0;
     }
     break;
   }
@@ -126,7 +134,7 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
 
 inline void GetBasicColour(Fix16 t, ColourChoice cc, byte& r, byte& g)
 {
-  int16_t index = (t * fix16_from_float(4.0f)).asInt();
+  int16_t index = (t * fix16_from_float(5.0f)).asInt();
   GetBasicColour(index, cc, r, g);
 }
 
@@ -136,11 +144,11 @@ namespace draw
 {
   
   // antialiased line
-  void WuLine(byte* frame, Fix16 x1, Fix16 y1, Fix16 x2, Fix16 y2, ColourChoice cc);
+  void WuLine(pixel* frame, Fix16 x1, Fix16 y1, Fix16 x2, Fix16 y2, ColourChoice cc);
 
 
-  void FontGlyph16x16(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
-  void FontGlyph8x8(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
+  void FontGlyph16x16(pixel* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
+  void FontGlyph8x8(pixel* frame, char c, int16_t fx, int16_t fy, ColourChoice cc);
 
 } // namespace draw
 
@@ -152,7 +160,7 @@ public:
   
   void Init(const char* text);
 
-  bool Render(byte* frame, ColourChoice cc);
+  bool Render(pixel* frame, ColourChoice cc);
 
 protected:
   const char* m_text;

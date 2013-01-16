@@ -18,6 +18,7 @@
 #endif 
 typedef unsigned char byte;
 
+typedef unsigned short pixel;
 
 // ---------------------------------------------------------------------------------------------------------------------
 struct Constants
@@ -47,7 +48,7 @@ struct FrameOutput
 {
   // assumes fixed 16x16 RG configuration, 2-bits per pixel.
   // frame stored 1-byte per pixel (XXRR XXGG)
-  byte  frame[Constants::FrameSize];
+  pixel  frame[Constants::FrameSize];
 
   void clear()
   {

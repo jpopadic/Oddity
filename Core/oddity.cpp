@@ -66,7 +66,7 @@ struct DisplayMode
 namespace vfx
 {
 
-DisplayMode::Enum gCurrentDisplayMode = DisplayMode::ripple;
+DisplayMode::Enum gCurrentDisplayMode = DisplayMode::plasma;
 
 // ---------------------------------------------------------------------------------------------------------------------
 void init(FXState& state)
@@ -79,40 +79,72 @@ void init(FXState& state)
   DisplayMode::doInitFor(gCurrentDisplayMode, state);
 }
 
+static int32_t dial = 24;
+
 // ---------------------------------------------------------------------------------------------------------------------
 bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 {
-  //DisplayMode::doTickFor(gCurrentDisplayMode, output, state);
+  DisplayMode::doTickFor(gCurrentDisplayMode, output, state);
 
+//   byte r, g;
+//   Fix16 nd = 0.0625f;
+//   for (int y=0; y<Constants::FrameHeight; y++)
+//   {
+//     Fix16 nn = 0.0f;
+// 
+//     for (int x=0; x<Constants::FrameWidth; x++)
+//     {
+//       ColourGradient(nn, true, false, r, g);
+//       setLED(output.frame, x, y, r, g);
+// 
+//       nn += nd;
+//     }
+//   }
+// 
+//   dial += input.dialChange[0];
+// 
+//   if (dial < 0)
+//     dial = 0;
+//   if (dial > 99)
+//     dial = 99;
+// 
+//   int32_t digit1 = dial / 10;
+//   if (dial < 10)
+//     digit1 = 0;
+//   
+//   int32_t digit2 = (dial - (digit1 * 10));
+// 
+//   draw::FontGlyph8x8(output.frame, 48 + digit1, 2, 2, Black);
+//   draw::FontGlyph8x8(output.frame, 48 + digit2, 7, 7, Black);
 
-  Fix16 pT = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.35f));
-  Fix16 pY = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.1f));
-
-  for (uint32_t x=0; x<Constants::FrameWidth; x++)
-  {
-    Fix16 pX = fix16_mul(fix16_from_int(x), fix16_from_float(0.3f));
-    pX += pT;
-
-    Fix16 row = Perlin2(pX, pY);
-    row *= 17.0f;
-
-    byte A[] = { 1, 2, 3, 3, 3, 3, 2, 1, 0 };
-    byte B[] = { 0, 0, 0, 1, 2, 3, 3, 3, 3 };
-
-    setLED(output.frame, x, 8, 1, 0);
-
-    int rowInt = row.asInt();
-    if (rowInt < 0)
-      rowInt = -rowInt;
-    if (rowInt > 8)
-      rowInt = 8;
-
-    for (uint32_t y=0; y<rowInt; y++)
-    {
-      setLED(output.frame, x, 8 - y, A[y], B[y]);
-      setLED(output.frame, x, 8 + y, A[y], B[y]);
-    }
-  }
+//   Fix16 pT = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.35f));
+//   Fix16 pY = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.1f));
+// 
+//   for (uint32_t x=0; x<Constants::FrameWidth; x++)
+//   {
+//     Fix16 pX = fix16_mul(fix16_from_int(x), fix16_from_float(0.3f));
+//     pX += pT;
+// 
+//     Fix16 row = Perlin2(pX, pY);
+//     row *= 17.0f;
+// 
+//     byte A[] = { 1, 2, 3, 3, 3, 2, 1, 0, 0 };
+//     byte B[] = { 0, 0, 0, 1, 2, 3, 3, 3, 2 };
+// 
+//     setLED(output.frame, x, 8, 1, 0);
+// 
+//     int rowInt = row.asInt();
+//     if (rowInt < 0)
+//       rowInt = -rowInt;
+//     if (rowInt > 8)
+//       rowInt = 8;
+// 
+//     for (uint32_t y=0; y<rowInt; y++)
+//     {
+//       setLED(output.frame, x, 8 - y, A[y], B[y]);
+//       setLED(output.frame, x, 8 + y, A[y], B[y]);
+//     }
+//   }
 
   return true;
 }

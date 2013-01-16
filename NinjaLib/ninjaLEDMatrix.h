@@ -30,7 +30,7 @@ public:
 	// static funtions callable via the control namespace
 	static void registerThis(HINSTANCE hInstance);
 	static void unregisterThis(HINSTANCE hInstance);
-  void decodeFramebuffer( sUInt8 *framebuffer );
+  void decodeFramebuffer( sUInt16 *framebuffer );
 
 protected:
 

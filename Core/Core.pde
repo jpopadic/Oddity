@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "oddity.h"
+#include "gamma.h"
+
+#define NOP asm volatile("nop");
 
 //----------------------------------------------------------------------------------------------------------------------
 // hax
@@ -11,46 +14,72 @@ void _exit(int status) {}
 int _kill(pid_t pid, int sig) { return 0; }
 }
 
-//----------------------------------------------------------------------------------------------------------------------
+#if HEARTH
+
+#define DEBUG_PORTA(_label)
+#define DEBUG_PORTB(_label)
+
+// Row data pins on PORTA
+#define RD1 0 // D2
+#define RD2 1 // D3
+#define GR1 2 // D1
+#define GR2 3 // D0
+#define BL1 4 // D10
+#define BL2 5 // D13
+#define CLK 6 // D12
+#define OE  7 // D11
+#define LE  8 // D6
+
+// Column select pins on PORTB
+#define A 5   // D4
+#define B 6   // D5
+#define C 7   // D9
+
+#else
+
 HardwareSPI spi(1);
+
+// PORTB
+#define LE     7 // D9 -> PB7
+#define STROBE 6 // D5 -> PB6
+
+// PORTA
+#define OE     10// D8 -> PA10
+#define CLK    9 // D7 -> PA9
+#define DATA   8 // D6 -> PA8
+
+#endif
 
 HardwareTimer displayTimer(1);
 HardwareTimer frameTimer(2);
 
+#if HEARTH
 
-enum Pins
-{
-  // column data pins
-  LE = 9,
-  OE = 8,
+// See setPixel implementation for format.
+#define BITPLANE_SIZE (Constants::FrameWidth * Constants::FrameHeight / 2)
+#else
+// WIDTH x HEIGHT x 2 (colours) / 8 bits per byte
+#define BITPLANE_SIZE (Constants::FrameWidth * Constants::FrameHeight / 4)  // 16 * 16 / 4 = 64
+#define HALFPLANE_SIZE (BITPLANE_SIZE / 2)              // 64 / 2      = 32
+#endif
+#define NUM_BITPLANES 4
+#define BUFFER_SIZE  (BITPLANE_SIZE * NUM_BITPLANES)    // 64 * 4      = 256
+#define REFRESH_DELAY 50 // uS
+#define FRAME_TIME    20 // mS
 
-  // column driver pins
-  CLK = 7,
-  DATA = 6,
-  STROBE = 5
-};
+#if HEARTH
+void setPixel(byte* buffer, int x, int y, char r, char g, char b);
+void setPixel4Bit(byte* buffer, int x, int y, char r, char g, char b);
+void setPixel8Bit(byte* buffer, int x, int y, char r, char g, char b);
+#endif
 
-#define FRAME_TIME 60
-
-
-//----------------------------------------------------------------------------------------------------------------------
 //
-// frame buffer stored as 6 bitmaps (2 colors x 3 color
-// intensities) ordered: R0 R1 R2 G0 G1 G2
-//
-// 32 bytes per pixel per color
-#define BITMAP_SIZE  (Constants::FrameWidth * Constants::FrameHeight / 8)
-#define BUFFER_SIZE  (BITMAP_SIZE * 6)
-#define GREEN_OFFSET (BITMAP_SIZE * 3)
-
-// variables for display update
-int gIntensity;
+// Display update variables.
+int gBitplane;
 int gColumn;
-int gIntensityMap[] = { 50, 100, 150 }; // geometric 50, 150, 300
 
-
-//----------------------------------------------------------------------------------------------------------------------
-// double buffer
+//
+// Display buffer.
 byte buffer[BUFFER_SIZE * 2];
 byte* pFrontBuffer;
 byte* pBackBuffer;
@@ -68,11 +97,13 @@ inline void flipBuffer()
   pBackBuffer = temp; 
 }
 
+void clearBuffer(byte* buffer);
 
 //----------------------------------------------------------------------------------------------------------------------
 // frame
-void loadFrame(byte* buffer, byte* frame);
+void loadFrame(byte* buffer, uint16_t* frame);
 volatile boolean gHaveNewFrame;
+uint16_t frame[Constants::FrameSize];
 
 //----------------------------------------------------------------------------------------------------------------------
 // encoder inputs
@@ -98,6 +129,8 @@ static FXState     g_state;
 // main code
 void setup()
 {
+  rcc_set_prescaler(RCC_PRESCALER_AHB, RCC_AHB_SYSCLK_DIV_1); 
+
   initialize();
   g_output.clear();
   
@@ -115,7 +148,7 @@ void loop()
   // work out changes from the encoders
   int alA = analogIncA;
   int alB = analogIncB;
-  int alC = analogIncC;  
+  int alC = analogIncC;
   inputs.dialChange[0] = (alA - analogLastA);
   inputs.dialChange[1] = (alB - analogLastB);
   inputs.dialChange[2] = (alC - analogLastC);
@@ -148,49 +181,84 @@ void updateFrame()
   }
   
   frameTimer.pause(); 
-  frameTimer.setPeriod(FRAME_TIME * 1000); // 20ms in us
+  frameTimer.setPeriod(FRAME_TIME * 1000);
   frameTimer.refresh();
   frameTimer.resume();  
 }
 
-//----------------------------------------------------------------------------------------------------------------------
 void initialize()
 {
-  // set up some outputs
-  pinMode(LE, OUTPUT);
-  pinMode(OE, OUTPUT);
-  pinMode(CLK, OUTPUT);
-  pinMode(DATA, OUTPUT);
-  pinMode(STROBE, OUTPUT);
+#if HEARTH
+
+  delay(500);
   
-  // initialize outputs
-  digitalWrite(LE, 0);    // init row latch low
-  digitalWrite(OE, 1);    // disable row drivers
-  digitalWrite(CLK, 0);   // init column clock low
-  digitalWrite(DATA, 0);  // init column data low
-  digitalWrite(STROBE, 0);// init column strobe low
+  // Configure data direction for output pins, push/pull, 50MHz
+  GPIOA->regs->CRL = 0x33333333;
+  GPIOA->regs->CRH = 0x33333333;
+  GPIOA->regs->ODR = (1 << LE);
   
-  // clear the column driver
-  digitalWrite(DATA, 1);
+  GPIOB->regs->CRL = 0x33344444;
+  GPIOB->regs->CRH = 0x44444444;
+  GPIOB->regs->ODR = 0;
+
+#else
+
+  /*
+  // PORTA
+  #define OE     10// D8 -> PA10
+  #define CLK    9 // D7 -> PA9
+  #define DATA   8 // D6 -> PA8
+  // PORTB
+  #define LE     7 // D9 -> PB7
+  #define STROBE 6 // D5 -> PB6
+  */
+  
+ #if 1
+  // This is shonky, but for some reason I can't get the ports to configure
+  // properly using the regs approach...
+ 
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
+  
+#else
+  
+  // Configure data direction for output pins, push/pull, 50MHz
+  GPIOA->regs->CRL = 0x03030303;
+  GPIOA->regs->CRH = 0x33333333;
+  GPIOA->regs->ODR = 0;  
+  
+  GPIOB->regs->CRL = 0x03030303;
+  GPIOB->regs->CRH = 0x33333333;
+  GPIOB->regs->ODR = 0;//<< LE);  // Latch starts high.
+
+#endif  
+  
+  GPIOA->regs->BRR = (1 << DATA);
   for(int i = 0; i < 16; i++)
   {
-    digitalWrite(CLK, 1);
-    digitalWrite(CLK, 0);
+    GPIOA->regs->BSRR = (1 << CLK);
+    GPIOA->regs->BRR  = (1 << CLK);
   }
 
   // Turn on the SPI port
   spi.begin(SPI_18MHZ, MSBFIRST, 0);
-  
-  // todo figure out how to know when write complete.
-  // 4 nops appear to be about right.
+
+  // TODO not sure why this is here...
   asm volatile("nop");
   asm volatile("nop");
   asm volatile("nop");
   asm volatile("nop");
-  
+
+  // TODO not sure why this is here...
   // latch row data
   digitalWrite(LE, 1);
   digitalWrite(LE, 0);
+
+#endif
   
   // set up frame buffer
   pFrontBuffer = buffer;
@@ -202,20 +270,19 @@ void initialize()
   analogIncB = analogLastB =0;
   analogIncC = analogLastC =0;
   
-  
   gHaveNewFrame = false;
 
   // encoder interrupts
   pinMode(ENCODER_A_PIN_1, INPUT_PULLUP);
   pinMode(ENCODER_A_PIN_2, INPUT_PULLUP);
-  attachInterrupt(ENCODER_A_PIN_1, handleEncoderA, CHANGE);
+  attachInterrupt(ENCODER_A_PIN_1, handleEncoderA, RISING);
   pinMode(ENCODER_B_PIN_1, INPUT_PULLUP);
   pinMode(ENCODER_B_PIN_2, INPUT_PULLUP);
-  attachInterrupt(ENCODER_B_PIN_1, handleEncoderB, CHANGE);
+  attachInterrupt(ENCODER_B_PIN_1, handleEncoderB, RISING);
   pinMode(ENCODER_C_PIN_1, INPUT_PULLUP);
   pinMode(ENCODER_C_PIN_2, INPUT_PULLUP);
-  attachInterrupt(ENCODER_C_PIN_1, handleEncoderC, CHANGE);
-    
+  attachInterrupt(ENCODER_C_PIN_1, handleEncoderC, RISING);
+
   //
   // set up frame timer
   frameTimer.pause();
@@ -225,14 +292,14 @@ void initialize()
   frameTimer.attachCompare1Interrupt(updateFrame);
   frameTimer.refresh();
   frameTimer.resume();
-  
+
   //
   // set up display timer
-  gIntensity = 0;
+  gBitplane = 0;
   gColumn = 0;
 
   displayTimer.pause(); 
-  displayTimer.setPeriod(gIntensityMap[gIntensity]);
+  displayTimer.setPeriod(REFRESH_DELAY);
   displayTimer.setChannel1Mode(TIMER_OUTPUT_COMPARE);
   displayTimer.setCompare(TIMER_CH1, 1);
   displayTimer.attachCompare1Interrupt(updateDisplay);
@@ -240,40 +307,118 @@ void initialize()
   displayTimer.resume();  
 }
 
-//----------------------------------------------------------------------------------------------------------------------
 void updateDisplay()
 {
-  // disable row drivers
-  digitalWrite(OE, 1);
+#if HEARTH
 
-  // increment column driver
-  // if this is the first column, seed with (inverted) on-state.
-  // this "on" will be shifted left for the next 15 columns.
-  if(gColumn != 0)
-    digitalWrite(DATA, 1);
+  GPIOA->regs->BSRR = (1 << OE);                // Output high, disable output.
+  DEBUG_PORTA("disable")
+
+  // Set column address from counter.
+  GPIOB->regs->BSRR = ((gColumn & 0x0007) << A) | (0x0007 << (A + 16));
+  DEBUG_PORTB("addr set")
+
+  GPIOA->regs->BSRR = (1 << LE);                 // Latch high, data transferred to output latch.
+  DEBUG_PORTA("latch up")    
+  GPIOA->regs->BRR = (1 << LE);                  // Latch low, latch (last interrupt's) data.
+  DEBUG_PORTA("latch down")
+
+  GPIOA->regs->BRR = (1 << OE);                  // Output low, enable output.
+  DEBUG_PORTA("enable")
+
+  // Delay doubles for each bit of depth. Produces linear gradient and will
+  // require gamma correction.
+  int delay = REFRESH_DELAY << gBitplane;
+  
+  // update up display timer with delay for this intensity
+  displayTimer.pause(); 
+  displayTimer.setPeriod(delay);
+  displayTimer.refresh();
+  displayTimer.resume();
+
+  if(++gBitplane == NUM_BITPLANES)
+  {
+    gBitplane = 0;
+    if(++gColumn == 8)
+      gColumn = 0;
+  }
+
+  // Clock out row data. Data should already be formatted in buffer such that each word
+  // contains this bitplane's pixel data for two pixels, according to the display layout.
+  for(int i = 0; i < 64; ++i)
+  {
+    // Clear row data lines, then set as needed.
+    GPIOA->regs->BSRR = (pFrontBuffer[gBitplane * BITPLANE_SIZE + gColumn * 64 + i] & 0x3f) | (0x3f << 16);	
+    DEBUG_PORTA("data set")
+    GPIOA->regs->BSRR = (1 << CLK);             // Clock high, transfers on rising edge.
+    DEBUG_PORTA("clock high")
+    GPIOA->regs->BRR = (1 << CLK);              // Clock low
+    DEBUG_PORTA("clock low")
+  }
+
+#else
+
+  /*
+  // PORTA
+  #define OE     10// D8 -> PA10
+  #define CLK    9 // D7 -> PA9
+  #define DATA   8 // D6 -> PA8
+  // PORTB
+  #define LE     7 // D9 -> PB7
+  #define STROBE 6 // D5 -> PB6
+  */
+
+  GPIOA->regs->BSRR = (1 << OE);      // Disable row drivers
+  
+  NOP
+  if(gColumn != 0)                    // Increment column data
+    GPIOA->regs->BSRR = (1 << DATA);
   else
-    digitalWrite(DATA, 0);
-  
-  // clock data in
-  digitalWrite(CLK, 1);
-  digitalWrite(CLK, 0);
+    GPIOA->regs->BRR = (1 << DATA);
+  NOP  
+  GPIOA->regs->BSRR = (1 << CLK);     // Clock column data
+  NOP
+  GPIOA->regs->BRR = (1 << CLK);
+  NOP
+  GPIOB->regs->BSRR = (1 << STROBE);  // Latch column data
+  NOP
+  GPIOB->regs->BRR = (1 << STROBE);
 
-  // latch shifted data
-  digitalWrite(STROBE, 1);    
-  digitalWrite(STROBE, 0);
+  NOP
+  GPIOB->regs->BSRR = (1 << LE);      // Latch row data (from last tick)
+  NOP
+  GPIOB->regs->BRR = (1 << LE); 
+
+  GPIOA->regs->BRR = (1 << OE);       // Enable row drivers
+
+  // Delay doubles for each bit of depth. Produces linear gradient and will
+  // require gamma correction TODO
+  int delay = REFRESH_DELAY << gBitplane;
   
+  // update up display timer with delay for this intensity
+  displayTimer.pause(); 
+  displayTimer.setPeriod(delay);
+  displayTimer.refresh();
+  displayTimer.resume();
+
+  if(++gColumn >= Constants::FrameWidth)
+  {
+    gColumn = 0;
+    if(++gBitplane >= NUM_BITPLANES)
+    {
+      gBitplane = 0;  
+    }
+  }
+
   // push row data
-  const int intensityOffset = gIntensity * BITMAP_SIZE;
-  const int columnOffset    = gColumn * 2;
-
+  const int bitplaneOffset = gBitplane * BITPLANE_SIZE;
+  const int columnOffset   = gColumn * 2;
   // red first
-  spi.write(pFrontBuffer[intensityOffset + columnOffset + 1]);
-  spi.write(pFrontBuffer[intensityOffset + columnOffset]);
-
+  spi.write(pFrontBuffer[bitplaneOffset + columnOffset + 1]);
+  spi.write(pFrontBuffer[bitplaneOffset + columnOffset]);
   // then green
-  spi.write(pFrontBuffer[GREEN_OFFSET + intensityOffset + columnOffset + 1]);
-  spi.write(pFrontBuffer[GREEN_OFFSET + intensityOffset + columnOffset]);
-    
+  spi.write(pFrontBuffer[HALFPLANE_SIZE + bitplaneOffset + columnOffset + 1]);
+  spi.write(pFrontBuffer[HALFPLANE_SIZE + bitplaneOffset + columnOffset]);
 
   // todo figure out how to know when write complete.
   // 4 nops appear to be about right.
@@ -281,28 +426,8 @@ void updateDisplay()
   asm volatile("nop");
   asm volatile("nop");
   asm volatile("nop"); 
- 
-  // latch row data
-  digitalWrite(LE, 1);
-  digitalWrite(LE, 0);
   
-  // update up display timer with delay for this intensity
-  displayTimer.pause(); 
-  displayTimer.setPeriod(gIntensityMap[gIntensity]);
-  displayTimer.refresh();
-  displayTimer.resume();
-  
-  // enable row drivers
-  digitalWrite(OE, 0);
-  
-  if(++gColumn > 15)
-  {
-    gColumn = 0;
-    if(++gIntensity > 2)
-    {
-      gIntensity = 0;  
-    }
-  }
+#endif
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -342,89 +467,139 @@ void handleEncoderC()
   }
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-const static byte addressing_red[Constants::FrameSize * 5] = { 
-0, 1, 16, 48, 80, 129, 2, 0, 32, 64, 2, 4, 16, 48, 80, 131, 8, 0, 32, 64, 4, 16, 16, 48, 80, 133, 32, 0, 32, 64, 6, 64, 16, 48, 80, 135, 128, 0, 32, 64, 8, 1, 17, 49, 81, 137, 2, 1, 33, 65, 10, 4, 17, 49, 81, 139, 8, 1, 33, 65, 12, 16, 17, 49, 81, 141, 32, 1, 33, 65, 14, 64, 17, 49, 81, 
-143, 128, 1, 33, 65, 16, 1, 18, 50, 82, 145, 2, 2, 34, 66, 18, 4, 18, 50, 82, 147, 8, 2, 34, 66, 20, 16, 18, 50, 82, 149, 32, 2, 34, 66, 22, 64, 18, 50, 82, 151, 128, 2, 34, 66, 24, 1, 19, 51, 83, 153, 2, 3, 35, 67, 26, 4, 19, 51, 83, 155, 8, 3, 35, 67, 28, 16, 19, 51, 83, 157, 32, 3, 35, 67, 30, 64, 19, 51, 83, 
-159, 128, 3, 35, 67, 32, 1, 20, 52, 84, 161, 2, 4, 36, 68, 34, 4, 20, 52, 84, 163, 8, 4, 36, 68, 36, 16, 20, 52, 84, 165, 32, 4, 36, 68, 38, 64, 20, 52, 84, 167, 128, 4, 36, 68, 40, 1, 21, 53, 85, 169, 2, 5, 37, 69, 42, 4, 21, 53, 85, 171, 8, 5, 37, 69, 44, 16, 21, 53, 85, 173, 32, 5, 37, 69, 46, 64, 21, 53, 85, 
-175, 128, 5, 37, 69, 48, 1, 22, 54, 86, 177, 2, 6, 38, 70, 50, 4, 22, 54, 86, 179, 8, 6, 38, 70, 52, 16, 22, 54, 86, 181, 32, 6, 38, 70, 54, 64, 22, 54, 86, 183, 128, 6, 38, 70, 56, 1, 23, 55, 87, 185, 2, 7, 39, 71, 58, 4, 23, 55, 87, 187, 8, 7, 39, 71, 60, 16, 23, 55, 87, 189, 32, 7, 39, 71, 62, 64, 23, 55, 87, 
-191, 128, 7, 39, 71, 64, 1, 24, 56, 88, 193, 2, 8, 40, 72, 66, 4, 24, 56, 88, 195, 8, 8, 40, 72, 68, 16, 24, 56, 88, 197, 32, 8, 40, 72, 70, 64, 24, 56, 88, 199, 128, 8, 40, 72, 72, 1, 25, 57, 89, 201, 2, 9, 41, 73, 74, 4, 25, 57, 89, 203, 8, 9, 41, 73, 76, 16, 25, 57, 89, 205, 32, 9, 41, 73, 78, 64, 25, 57, 89, 
-207, 128, 9, 41, 73, 80, 1, 26, 58, 90, 209, 2, 10, 42, 74, 82, 4, 26, 58, 90, 211, 8, 10, 42, 74, 84, 16, 26, 58, 90, 213, 32, 10, 42, 74, 86, 64, 26, 58, 90, 215, 128, 10, 42, 74, 88, 1, 27, 59, 91, 217, 2, 11, 43, 75, 90, 4, 27, 59, 91, 219, 8, 11, 43, 75, 92, 16, 27, 59, 91, 221, 32, 11, 43, 75, 94, 64, 27, 59, 91, 
-223, 128, 11, 43, 75, 96, 1, 28, 60, 92, 225, 2, 12, 44, 76, 98, 4, 28, 60, 92, 227, 8, 12, 44, 76, 100, 16, 28, 60, 92, 229, 32, 12, 44, 76, 102, 64, 28, 60, 92, 231, 128, 12, 44, 76, 104, 1, 29, 61, 93, 233, 2, 13, 45, 77, 106, 4, 29, 61, 93, 235, 8, 13, 45, 77, 108, 16, 29, 61, 93, 237, 32, 13, 45, 77, 110, 64, 29, 61, 93, 
-239, 128, 13, 45, 77, 112, 1, 30, 62, 94, 241, 2, 14, 46, 78, 114, 4, 30, 62, 94, 243, 8, 14, 46, 78, 116, 16, 30, 62, 94, 245, 32, 14, 46, 78, 118, 64, 30, 62, 94, 247, 128, 14, 46, 78, 120, 1, 31, 63, 95, 249, 2, 15, 47, 79, 122, 4, 31, 63, 95, 251, 8, 15, 47, 79, 124, 16, 31, 63, 95, 253, 32, 15, 47, 79, 126, 64, 31, 63, 95, 
-255, 128, 15, 47, 79, 128, 1, 0, 32, 64, 1, 2, 16, 48, 80, 130, 4, 0, 32, 64, 3, 8, 16, 48, 80, 132, 16, 0, 32, 64, 5, 32, 16, 48, 80, 134, 64, 0, 32, 64, 7, 128, 16, 48, 80, 136, 1, 1, 33, 65, 9, 2, 17, 49, 81, 138, 4, 1, 33, 65, 11, 8, 17, 49, 81, 140, 16, 1, 33, 65, 13, 32, 17, 49, 81, 142, 64, 1, 33, 65, 
-15, 128, 17, 49, 81, 144, 1, 2, 34, 66, 17, 2, 18, 50, 82, 146, 4, 2, 34, 66, 19, 8, 18, 50, 82, 148, 16, 2, 34, 66, 21, 32, 18, 50, 82, 150, 64, 2, 34, 66, 23, 128, 18, 50, 82, 152, 1, 3, 35, 67, 25, 2, 19, 51, 83, 154, 4, 3, 35, 67, 27, 8, 19, 51, 83, 156, 16, 3, 35, 67, 29, 32, 19, 51, 83, 158, 64, 3, 35, 67, 
-31, 128, 19, 51, 83, 160, 1, 4, 36, 68, 33, 2, 20, 52, 84, 162, 4, 4, 36, 68, 35, 8, 20, 52, 84, 164, 16, 4, 36, 68, 37, 32, 20, 52, 84, 166, 64, 4, 36, 68, 39, 128, 20, 52, 84, 168, 1, 5, 37, 69, 41, 2, 21, 53, 85, 170, 4, 5, 37, 69, 43, 8, 21, 53, 85, 172, 16, 5, 37, 69, 45, 32, 21, 53, 85, 174, 64, 5, 37, 69, 
-47, 128, 21, 53, 85, 176, 1, 6, 38, 70, 49, 2, 22, 54, 86, 178, 4, 6, 38, 70, 51, 8, 22, 54, 86, 180, 16, 6, 38, 70, 53, 32, 22, 54, 86, 182, 64, 6, 38, 70, 55, 128, 22, 54, 86, 184, 1, 7, 39, 71, 57, 2, 23, 55, 87, 186, 4, 7, 39, 71, 59, 8, 23, 55, 87, 188, 16, 7, 39, 71, 61, 32, 23, 55, 87, 190, 64, 7, 39, 71, 
-63, 128, 23, 55, 87, 192, 1, 8, 40, 72, 65, 2, 24, 56, 88, 194, 4, 8, 40, 72, 67, 8, 24, 56, 88, 196, 16, 8, 40, 72, 69, 32, 24, 56, 88, 198, 64, 8, 40, 72, 71, 128, 24, 56, 88, 200, 1, 9, 41, 73, 73, 2, 25, 57, 89, 202, 4, 9, 41, 73, 75, 8, 25, 57, 89, 204, 16, 9, 41, 73, 77, 32, 25, 57, 89, 206, 64, 9, 41, 73, 
-79, 128, 25, 57, 89, 208, 1, 10, 42, 74, 81, 2, 26, 58, 90, 210, 4, 10, 42, 74, 83, 8, 26, 58, 90, 212, 16, 10, 42, 74, 85, 32, 26, 58, 90, 214, 64, 10, 42, 74, 87, 128, 26, 58, 90, 216, 1, 11, 43, 75, 89, 2, 27, 59, 91, 218, 4, 11, 43, 75, 91, 8, 27, 59, 91, 220, 16, 11, 43, 75, 93, 32, 27, 59, 91, 222, 64, 11, 43, 75, 
-95, 128, 27, 59, 91, 224, 1, 12, 44, 76, 97, 2, 28, 60, 92, 226, 4, 12, 44, 76, 99, 8, 28, 60, 92, 228, 16, 12, 44, 76, 101, 32, 28, 60, 92, 230, 64, 12, 44, 76, 103, 128, 28, 60, 92, 232, 1, 13, 45, 77, 105, 2, 29, 61, 93, 234, 4, 13, 45, 77, 107, 8, 29, 61, 93, 236, 16, 13, 45, 77, 109, 32, 29, 61, 93, 238, 64, 13, 45, 77, 
-111, 128, 29, 61, 93, 240, 1, 14, 46, 78, 113, 2, 30, 62, 94, 242, 4, 14, 46, 78, 115, 8, 30, 62, 94, 244, 16, 14, 46, 78, 117, 32, 30, 62, 94, 246, 64, 14, 46, 78, 119, 128, 30, 62, 94, 248, 1, 15, 47, 79, 121, 2, 31, 63, 95, 250, 4, 15, 47, 79, 123, 8, 31, 63, 95, 252, 16, 15, 47, 79, 125, 32, 31, 63, 95, 254, 64, 15, 47, 79, 
-127, 128, 31, 63, 95, 
-};
 
-//----------------------------------------------------------------------------------------------------------------------
-const static byte addressing_green[Constants::FrameSize * 5] = { 
-0, 2, 112, 144, 176, 1, 1, 112, 144, 176, 2, 4, 112, 144, 176, 3, 8, 112, 144, 176, 4, 16, 112, 144, 176, 5, 32, 112, 144, 176, 6, 64, 112, 144, 176, 7, 128, 112, 144, 176, 8, 1, 113, 145, 177, 9, 2, 113, 145, 177, 10, 4, 113, 145, 177, 11, 8, 113, 145, 177, 12, 16, 113, 145, 177, 13, 32, 113, 145, 177, 14, 64, 113, 145, 177, 
-15, 128, 113, 145, 177, 16, 2, 114, 146, 178, 17, 1, 114, 146, 178, 18, 4, 114, 146, 178, 19, 8, 114, 146, 178, 20, 16, 114, 146, 178, 21, 32, 114, 146, 178, 22, 64, 114, 146, 178, 23, 128, 114, 146, 178, 24, 1, 115, 147, 179, 25, 2, 115, 147, 179, 26, 4, 115, 147, 179, 27, 8, 115, 147, 179, 28, 16, 115, 147, 179, 29, 32, 115, 147, 179, 30, 64, 115, 147, 179, 
-31, 128, 115, 147, 179, 32, 2, 116, 148, 180, 33, 1, 116, 148, 180, 34, 4, 116, 148, 180, 35, 8, 116, 148, 180, 36, 16, 116, 148, 180, 37, 32, 116, 148, 180, 38, 64, 116, 148, 180, 39, 128, 116, 148, 180, 40, 1, 117, 149, 181, 41, 2, 117, 149, 181, 42, 4, 117, 149, 181, 43, 8, 117, 149, 181, 44, 16, 117, 149, 181, 45, 32, 117, 149, 181, 46, 64, 117, 149, 181, 
-47, 128, 117, 149, 181, 48, 2, 118, 150, 182, 49, 1, 118, 150, 182, 50, 4, 118, 150, 182, 51, 8, 118, 150, 182, 52, 16, 118, 150, 182, 53, 32, 118, 150, 182, 54, 64, 118, 150, 182, 55, 128, 118, 150, 182, 56, 1, 119, 151, 183, 57, 2, 119, 151, 183, 58, 4, 119, 151, 183, 59, 8, 119, 151, 183, 60, 16, 119, 151, 183, 61, 32, 119, 151, 183, 62, 64, 119, 151, 183, 
-63, 128, 119, 151, 183, 64, 2, 120, 152, 184, 65, 1, 120, 152, 184, 66, 4, 120, 152, 184, 67, 8, 120, 152, 184, 68, 16, 120, 152, 184, 69, 32, 120, 152, 184, 70, 64, 120, 152, 184, 71, 128, 120, 152, 184, 72, 1, 121, 153, 185, 73, 2, 121, 153, 185, 74, 4, 121, 153, 185, 75, 8, 121, 153, 185, 76, 16, 121, 153, 185, 77, 32, 121, 153, 185, 78, 64, 121, 153, 185, 
-79, 128, 121, 153, 185, 80, 2, 122, 154, 186, 81, 1, 122, 154, 186, 82, 4, 122, 154, 186, 83, 8, 122, 154, 186, 84, 16, 122, 154, 186, 85, 32, 122, 154, 186, 86, 64, 122, 154, 186, 87, 128, 122, 154, 186, 88, 1, 123, 155, 187, 89, 2, 123, 155, 187, 90, 4, 123, 155, 187, 91, 8, 123, 155, 187, 92, 16, 123, 155, 187, 93, 32, 123, 155, 187, 94, 64, 123, 155, 187, 
-95, 128, 123, 155, 187, 96, 2, 124, 156, 188, 97, 1, 124, 156, 188, 98, 4, 124, 156, 188, 99, 8, 124, 156, 188, 100, 16, 124, 156, 188, 101, 32, 124, 156, 188, 102, 64, 124, 156, 188, 103, 128, 124, 156, 188, 104, 1, 125, 157, 189, 105, 2, 125, 157, 189, 106, 4, 125, 157, 189, 107, 8, 125, 157, 189, 108, 16, 125, 157, 189, 109, 32, 125, 157, 189, 110, 64, 125, 157, 189, 
-111, 128, 125, 157, 189, 112, 2, 126, 158, 190, 113, 1, 126, 158, 190, 114, 4, 126, 158, 190, 115, 8, 126, 158, 190, 116, 16, 126, 158, 190, 117, 32, 126, 158, 190, 118, 64, 126, 158, 190, 119, 128, 126, 158, 190, 120, 1, 127, 159, 191, 121, 2, 127, 159, 191, 122, 4, 127, 159, 191, 123, 8, 127, 159, 191, 124, 16, 127, 159, 191, 125, 32, 127, 159, 191, 126, 64, 127, 159, 191, 
-127, 128, 127, 159, 191, 128, 2, 96, 128, 160, 129, 1, 96, 128, 160, 130, 4, 96, 128, 160, 131, 8, 96, 128, 160, 132, 16, 96, 128, 160, 133, 32, 96, 128, 160, 134, 64, 96, 128, 160, 135, 128, 96, 128, 160, 136, 1, 97, 129, 161, 137, 2, 97, 129, 161, 138, 4, 97, 129, 161, 139, 8, 97, 129, 161, 140, 16, 97, 129, 161, 141, 32, 97, 129, 161, 142, 64, 97, 129, 161, 
-143, 128, 97, 129, 161, 144, 2, 98, 130, 162, 145, 1, 98, 130, 162, 146, 4, 98, 130, 162, 147, 8, 98, 130, 162, 148, 16, 98, 130, 162, 149, 32, 98, 130, 162, 150, 64, 98, 130, 162, 151, 128, 98, 130, 162, 152, 1, 99, 131, 163, 153, 2, 99, 131, 163, 154, 4, 99, 131, 163, 155, 8, 99, 131, 163, 156, 16, 99, 131, 163, 157, 32, 99, 131, 163, 158, 64, 99, 131, 163, 
-159, 128, 99, 131, 163, 160, 2, 100, 132, 164, 161, 1, 100, 132, 164, 162, 4, 100, 132, 164, 163, 8, 100, 132, 164, 164, 16, 100, 132, 164, 165, 32, 100, 132, 164, 166, 64, 100, 132, 164, 167, 128, 100, 132, 164, 168, 1, 101, 133, 165, 169, 2, 101, 133, 165, 170, 4, 101, 133, 165, 171, 8, 101, 133, 165, 172, 16, 101, 133, 165, 173, 32, 101, 133, 165, 174, 64, 101, 133, 165, 
-175, 128, 101, 133, 165, 176, 2, 102, 134, 166, 177, 1, 102, 134, 166, 178, 4, 102, 134, 166, 179, 8, 102, 134, 166, 180, 16, 102, 134, 166, 181, 32, 102, 134, 166, 182, 64, 102, 134, 166, 183, 128, 102, 134, 166, 184, 1, 103, 135, 167, 185, 2, 103, 135, 167, 186, 4, 103, 135, 167, 187, 8, 103, 135, 167, 188, 16, 103, 135, 167, 189, 32, 103, 135, 167, 190, 64, 103, 135, 167, 
-191, 128, 103, 135, 167, 192, 2, 104, 136, 168, 193, 1, 104, 136, 168, 194, 4, 104, 136, 168, 195, 8, 104, 136, 168, 196, 16, 104, 136, 168, 197, 32, 104, 136, 168, 198, 64, 104, 136, 168, 199, 128, 104, 136, 168, 200, 1, 105, 137, 169, 201, 2, 105, 137, 169, 202, 4, 105, 137, 169, 203, 8, 105, 137, 169, 204, 16, 105, 137, 169, 205, 32, 105, 137, 169, 206, 64, 105, 137, 169, 
-207, 128, 105, 137, 169, 208, 2, 106, 138, 170, 209, 1, 106, 138, 170, 210, 4, 106, 138, 170, 211, 8, 106, 138, 170, 212, 16, 106, 138, 170, 213, 32, 106, 138, 170, 214, 64, 106, 138, 170, 215, 128, 106, 138, 170, 216, 1, 107, 139, 171, 217, 2, 107, 139, 171, 218, 4, 107, 139, 171, 219, 8, 107, 139, 171, 220, 16, 107, 139, 171, 221, 32, 107, 139, 171, 222, 64, 107, 139, 171, 
-223, 128, 107, 139, 171, 224, 2, 108, 140, 172, 225, 1, 108, 140, 172, 226, 4, 108, 140, 172, 227, 8, 108, 140, 172, 228, 16, 108, 140, 172, 229, 32, 108, 140, 172, 230, 64, 108, 140, 172, 231, 128, 108, 140, 172, 232, 1, 109, 141, 173, 233, 2, 109, 141, 173, 234, 4, 109, 141, 173, 235, 8, 109, 141, 173, 236, 16, 109, 141, 173, 237, 32, 109, 141, 173, 238, 64, 109, 141, 173, 
-239, 128, 109, 141, 173, 240, 2, 110, 142, 174, 241, 1, 110, 142, 174, 242, 4, 110, 142, 174, 243, 8, 110, 142, 174, 244, 16, 110, 142, 174, 245, 32, 110, 142, 174, 246, 64, 110, 142, 174, 247, 128, 110, 142, 174, 248, 1, 111, 143, 175, 249, 2, 111, 143, 175, 250, 4, 111, 143, 175, 251, 8, 111, 143, 175, 252, 16, 111, 143, 175, 253, 32, 111, 143, 175, 254, 64, 111, 143, 175, 
-255, 128, 111, 143, 175, 
-};
+#if HEARTH
 
-//----------------------------------------------------------------------------------------------------------------------
-void loadFrame(byte* buffer, byte* frame)
+void loadFrame(byte* buffer, uint16_t* frame)
 {
-  int adrG = 0, adrR = 0;
   for(int i = 0; i < Constants::FrameSize; ++i)
   { 
-    byte pixel_r = frame[addressing_red[adrR ++]];
-    byte pixel_g = frame[addressing_green[adrG ++]];
-    
-    byte red   = pixel_r & 0x0f;
-    byte green = (pixel_g >> 4) & 0x0f;
+    byte r = frame[i] & 0x0f;
+    byte g = (frame[i] >> 4) & 0x0f;
+    byte b = (frame[i] >> 8) & 0x0f;
+    setPixel(buffer, i % Constants::FrameWidth, i / Constants::FrameWidth, r, g, b);
+  }
+}
+
+/*
+ *    Buffer data map of 32 x 32 pixel RGB panel (assumes two 16 x 32 panels in series).
+ *
+ *    Index is (y % 8) * 64 + (y > 15 ? 32 : 0) + x.  Each buffer position holds data for
+ *    two different pixels, eight rows apart. Set low bits (RD1, GR1, BL1) if Y is in the
+ *    range 0..7 or 16..23, otherwise set high bits (RD2, GR2, BL2).
+ *
+ *     _0____________________________________________________________________________31_
+ * 0  | 0    |...................................LOW....................................|
+ * 1  |64    |...................................LOW....................................|
+ * 2  |128   |...................................LOW....................................|
+ * 3  |192   |...................................LOW....................................|
+ * 4  |256   |...................................LOW....................................|
+ * 5  |320   |...................................LOW....................................|
+ * 6  |384   |...................................LOW....................................|
+ * 7  |448   |...................................LOW....................................|
+ * 8  | 0    |...................................HIGH...................................|
+ * 9  |64    |...................................HIGH...................................|
+ * 10 |128   |...................................HIGH...................................|
+ * 11 |192   |...................................HIGH...................................|
+ * 12 |256   |...................................HIGH...................................|
+ * 13 |320   |...................................HIGH...................................|
+ * 14 |384   |...................................HIGH...................................|
+ * 15 |448   |___________________________________HIGH___________________________________|
+ * 16 | 0 +32|...................................LOW....................................|
+ * 17 |64 +32|...................................LOW....................................|
+ * 18 |128+32|...................................LOW....................................|
+ * 19 |192+32|...................................LOW....................................|
+ * 20 |256+32|...................................LOW....................................|
+ * 21 |320+32|...................................LOW....................................|
+ * 22 |384+32|...................................LOW....................................|
+ * 23 |448+32|...................................LOW....................................|
+ * 24 | 0 +32|...................................HIGH...................................|
+ * 25 |64 +32|...................................HIGH...................................|
+ * 26 |128+32|...................................HIGH...................................|
+ * 27 |192+32|...................................HIGH...................................|
+ * 28 |256+32|...................................HIGH...................................|
+ * 29 |320+32|...................................HIGH...................................|
+ * 20 |384+32|...................................HIGH...................................|
+ * 31 |448+32|___________________________________HIGH___________________________________|
+ *
+ */
+
+void setPixel(byte* buffer, int x, int y, char r, char g, char b)
+{
+  int index = (y % 8) * 64 + (y > 15 ? 32 : 0) + x;
+  char mask = 1;
+  
+  if((y > 7 && y < 16) || (y > 23))
+  {
+    // set high color bits
+    for(int i = 0; i < NUM_BITPLANES; ++i)
+    {
+      if(r & mask)
+        buffer[index] |= (1 << RD2);
+      if(g & mask)
+        buffer[index] |= (1 << GR2);	
+      if(b & mask)
+        buffer[index] |= (1 << BL2);
+      
+      mask = mask << 1;
+      index += BITPLANE_SIZE;   
+    }
+  }
+  else
+  {
+    // set low color bits
+    for(int i = 0; i < NUM_BITPLANES; ++i)
+    { 
+      if(r & mask)
+        buffer[index] |= (1 << RD1);
+      if(g & mask)
+        buffer[index] |= (1 << GR1);
+      if(b & mask)
+        buffer[index] |= (1 << BL1);
+      
+      mask = mask << 1;
+      index += BITPLANE_SIZE;   
+    }      
+  }
+}
+
+void setPixel4Bit(byte* buffer, int x, int y, char r, char g, char b)
+{
+  setPixel(buffer, x, y, gamma_lookup[(unsigned int)(r << 4)], gamma_lookup[(unsigned int)(g << 4)], gamma_lookup[(unsigned int)(b << 4)]);
+}
+
+void setPixel8Bit(byte* buffer, int x, int y, char r, char g, char b)
+{
+  setPixel(buffer, x, y, gamma_lookup[(unsigned int)r], gamma_lookup[(unsigned int)g], gamma_lookup[(unsigned int)b]);
+}
+
+#else
+
+void loadFrame(byte* buffer, uint16_t* frame)
+{
+  for(int i = 0; i < Constants::FrameSize; ++i)
+  { 
+    byte red = frame[i] & 0x0f;
+    byte green = (frame[i] >> 4) & 0x0f;
 
     // some swapping stuff because the hardware is wired upside-down :-)
     int offset = Constants::FrameSize / 2;
     if(i >= offset)
       i -= offset;
     else
-      i += offset;
+      i+= offset;
 
+    byte mask = (1 << (i % 8));
 
-    // red
-    // ------------------------------------------------
-    byte mask = addressing_red[adrR ++];
-    
-    for(int j = 0; j < red && j < 3; ++j)
+    for(int j = 0; j < NUM_BITPLANES; ++j)
     {
-      buffer[ addressing_red[adrR + j] ] |= mask;
-    }
-
-    adrR += 3;
-    
-
-    // green
-    // ------------------------------------------------
-    mask = addressing_green[adrG ++];
-    
-    for(int j = 0; j < green && j < 3; ++j)
-    {
-      buffer[ addressing_green[adrG + j] ] |= mask;
+      // TODO Figure shifts to remove conditional.
+      if(red & (1 << j))
+        buffer[j * BITPLANE_SIZE + i / 8] |= mask;
+      if(green & (1 << j))   
+        buffer[HALFPLANE_SIZE + j * BITPLANE_SIZE + i / 8] |= mask;
     } 
-    
-    adrG += 3;
   }
 }
+
+#endif 

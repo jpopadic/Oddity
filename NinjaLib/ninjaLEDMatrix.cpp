@@ -19,7 +19,7 @@
 #include "ninja.h"
 #include "GDITools.h"
 
-static COLORREF ledColors[4][4];
+static COLORREF ledColors[5][5];
 
 /*===========================================================================*\
 | register the control with windows, bound to the passed app instance handle
@@ -113,17 +113,19 @@ void cNinjaLED::draw(HDC hdc)
   DeleteDC(hdcN);
 }
 
-void cNinjaLED::decodeFramebuffer( sUInt8 *framebuffer )
+void cNinjaLED::decodeFramebuffer( sUInt16 *framebuffer )
 {
   for (sUInt32 y=0; y<EdgeLen; y++)
   {
     for (sUInt32 x=0; x<EdgeLen; x++)
     {
-      sUInt8 pixel = framebuffer[(y * EdgeLen) + x];
-      sUInt8 red   = pixel & 0x0f;
-      sUInt8 green = (pixel >> 4) & 0x0f;
+      sUInt16 pixel = framebuffer[(y * EdgeLen) + x];
 
-      m_LEDs[(y * EdgeLen) + x] = ledColors[red][green];
+      sUInt8 r = pixel & 0x0f;
+      sUInt8 g = (pixel >> 4) & 0x0f;
+      sUInt8 b = (pixel >> 8) & 0x0f;
+
+      m_LEDs[(y * EdgeLen) + x] = ledColors[r][g];
     }
   }
 }
@@ -148,12 +150,12 @@ cNinjaLED *createNinjaLED(HWND hwHost, sUInt32 _EdgeLen)
 
   cLED->hwHost = hwHost;
 
-  for (int r=0; r<4; r++)
+  for (int r=0; r<5; r++)
   {
-    for (int g=0; g<4; g++)
+    for (int g=0; g<5; g++)
     {
-      int led_red = 20 + (r * 75);
-      int led_green = 20 + (g * 75);
+      int led_red = (r * 55);
+      int led_green = (g * 55);
 
       ledColors[r][g] = RGB(led_red, led_green, 0);
     }

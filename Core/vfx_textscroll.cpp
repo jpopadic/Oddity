@@ -29,7 +29,7 @@ void TextScroller::Init(const char* text)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-bool TextScroller::Render(byte* frame, ColourChoice cc)
+bool TextScroller::Render(pixel* frame, ColourChoice cc)
 {
   int nextChar = (m_char + 1) % m_len;
 

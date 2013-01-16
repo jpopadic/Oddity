@@ -44,7 +44,7 @@ namespace draw
 {
 
 // ---------------------------------------------------------------------------------------------------------------------
-void WuLine(byte* frame, Fix16 x1, Fix16 y1, Fix16 x2, Fix16 y2, ColourChoice cc)
+void WuLine(pixel* frame, Fix16 x1, Fix16 y1, Fix16 x2, Fix16 y2, ColourChoice cc)
 {
   byte r = 0;
   byte g = 0;

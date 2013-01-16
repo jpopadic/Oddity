@@ -12,7 +12,7 @@
 #include "stdlib.h"
 
 // ---------------------------------------------------------------------------------------------------------------------
-void setLED(byte* frame, int x, int y, byte r, byte g, bool additive, bool swapXY)
+void setLED(pixel* frame, int x, int y, byte r, byte g, bool additive, bool swapXY)
 {
   if (swapXY)
   {
@@ -27,12 +27,12 @@ void setLED(byte* frame, int x, int y, byte r, byte g, bool additive, bool swapX
   if(y < 0 || y >= Constants::FrameHeight)
     return;    
 
-  byte &pixel = frame[y * Constants::FrameWidth + x];  
+  pixel &LEDpixel = frame[y * Constants::FrameWidth + x];  
   byte red, green;
 
   if (additive)
   {
-    DecodeByte(pixel, red, green);
+    DecodeByte(LEDpixel, red, green);
 
     red += r;
     green += g;
@@ -43,12 +43,12 @@ void setLED(byte* frame, int x, int y, byte r, byte g, bool additive, bool swapX
     green = g;
   }
   
-  if (red > 3)
-    red = 3;
-  if (green > 3)
-    green = 3;
+  if (red > 4)
+    red = 4;
+  if (green > 4)
+    green = 4;
 
-  pixel = red | (green << 4);
+  LEDpixel = red | (green << 4);
 }
 
 
@@ -65,12 +65,12 @@ Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY)
 // ---------------------------------------------------------------------------------------------------------------------
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g)
 {
-  byte A[] = { 1, 2, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0 };
-  byte B[] = { 0, 0, 0, 1, 2, 3, 3, 3, 3, 2, 1, 1 };
+  byte A[] = { 1, 2, 3, 4, 4, 4, 4, 4, 3, 2, 1, 0, 0, 0 };
+  byte B[] = { 0, 0, 0, 0, 1, 2, 3, 4, 4, 4, 4, 3, 2, 1 };
 
-  int index = (t * fix16_from_float(halfGradient?6.0f:12.0f)).asInt(); 
+  int index = (t * fix16_from_float(halfGradient?7.0f:14.0f)).asInt(); 
   index = abs(index);
-  index %= 12;
+  index %= 14;
     
   if (redFirst)
   {
@@ -85,9 +85,23 @@ void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+void ColourBand(Fix16 t, byte& r, byte& g)
+{
+  byte A[] = { 0, 0, 1, 2, 4, 3, 0, 0, 0 };
+  byte B[] = { 0, 0, 0, 3, 4, 2, 1, 0, 0 };
+
+  int index = (t * fix16_from_float(9.0f)).asInt(); 
+  index = abs(index);
+  index %= 9;
+
+  r = A[index];
+  g = B[index];
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 extern const unsigned char* getFontGlyphData16x16(char c);
 
-void draw::FontGlyph16x16(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
+void draw::FontGlyph16x16(pixel* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
 {
   const unsigned char* fontBuf = getFontGlyphData16x16(c);
   if (!fontBuf)
@@ -109,7 +123,7 @@ void draw::FontGlyph16x16(byte* frame, char c, int16_t fx, int16_t fy, ColourCho
 // ---------------------------------------------------------------------------------------------------------------------
 extern const unsigned char* getFontGlyphData8x8(char c);
 
-void draw::FontGlyph8x8(byte* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
+void draw::FontGlyph8x8(pixel* frame, char c, int16_t fx, int16_t fy, ColourChoice cc)
 {
   const unsigned char* fontBuf = getFontGlyphData8x8(c);
   if (!fontBuf)
@@ -122,8 +136,11 @@ void draw::FontGlyph8x8(byte* frame, char c, int16_t fx, int16_t fy, ColourChoic
     {
       int set = fontBuf[y] & 1 << x;
 
-      GetBasicColour(set * 3, cc, r, g);
-      setLED(frame, x + fx, y + fy, r, g);
+      if (set > 0)
+      {
+        GetBasicColour(set * 3, cc, r, g);
+        setLED(frame, x + fx, y + fy, r, g);
+      }
     }
   }
 }
