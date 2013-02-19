@@ -31,9 +31,9 @@ namespace Test
       StringBuilder bOut = new StringBuilder(1024);
 
 
-      rOut.AppendFormat("const byte {0}_red[{1}] = {{ ", codeName.Text, steps);
-      gOut.AppendFormat("const byte {0}_green[{1}] = {{ ", codeName.Text, steps);
-      bOut.AppendFormat("const byte {0}_blue[{1}] = {{ ", codeName.Text, steps);
+      rOut.AppendFormat("const byte {0}_red[{1}]   = {{", codeName.Text, steps);
+      gOut.AppendFormat("const byte {0}_green[{1}] = {{", codeName.Text, steps);
+      bOut.AppendFormat("const byte {0}_blue[{1}]  = {{", codeName.Text, steps);
 
 
       double pt = 0;
@@ -49,9 +49,9 @@ namespace Test
         byte G4 = (byte)Math.Floor(G * 15.0);
         byte B4 = (byte)Math.Floor(B * 15.0);
 
-        rOut.AppendFormat("{0}, ", R4);
-        gOut.AppendFormat("{0}, ", G4);
-        bOut.AppendFormat("{0}, ", B4);
+        rOut.AppendFormat(" {0,2},", R4);
+        gOut.AppendFormat(" {0,2},", G4);
+        bOut.AppendFormat(" {0,2},", B4);
 
         pt += stepDelta;
       }
@@ -60,9 +60,9 @@ namespace Test
       String gRes = gOut.ToString().TrimEnd(new char[] { ',' });
       String bRes = bOut.ToString().TrimEnd(new char[] { ',' });
 
-      rRes += "}; " + Environment.NewLine;
-      gRes += "}; " + Environment.NewLine;
-      bRes += "}; " + Environment.NewLine;
+      rRes += " }; " + Environment.NewLine;
+      gRes += " }; " + Environment.NewLine;
+      bRes += " }; " + Environment.NewLine;
 
       Clipboard.SetText(rRes + gRes + bRes);
 
