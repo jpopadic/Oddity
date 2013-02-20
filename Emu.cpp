@@ -66,7 +66,7 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
   case WM_TIMER:
     {
-      g_output.clear();
+      //g_output.clear();
       g_state.counter ++;
 
       // work out changes from the encoders

@@ -107,16 +107,20 @@ uint16_t frame[Constants::FrameSize];
 
 //----------------------------------------------------------------------------------------------------------------------
 // encoder inputs
-#define ENCODER_A_PIN_1 15
-#define ENCODER_A_PIN_2 16
-#define ENCODER_B_PIN_1 18
-#define ENCODER_B_PIN_2 20
-#define ENCODER_C_PIN_1 17
-#define ENCODER_C_PIN_2 19
+#define ENCODER_A_PIN_1 15 // EXTI   0
+#define ENCODER_A_PIN_2 16 // EXTI 1
+#define ENCODER_B_PIN_1 17 // EXTI   2
+#define ENCODER_B_PIN_2 18// EXTI 4
+#define ENCODER_C_PIN_1 19 // EXTI   5
+#define ENCODER_C_PIN_2 20 // EXTI 3
+#define BUTTON_PIN 0       // EXTI   3
 
 void handleEncoderA();
 void handleEncoderB();
 void handleEncoderC();
+void handleButton();
+
+volatile bool dialButtonClick;
 volatile int analogIncA, analogIncB, analogIncC;
 int analogLastA, analogLastB, analogLastC;
 
@@ -152,15 +156,17 @@ void loop()
   inputs.dialChange[0] = (alA - analogLastA);
   inputs.dialChange[1] = (alB - analogLastB);
   inputs.dialChange[2] = (alC - analogLastC);
+  inputs.dialClick = dialButtonClick;
   analogLastA = alA;
   analogLastB = alB;
   analogLastC = alC;
+  dialButtonClick = false;
   
 
   g_state.counter ++;
 
   // clear the frame
-  g_output.clear();
+  //g_output.clear();
   
   // tick the VFX core
   if (vfx::tick(inputs, g_state, g_output))
@@ -269,20 +275,25 @@ void initialize()
   analogIncA = analogLastA =0;
   analogIncB = analogLastB =0;
   analogIncC = analogLastC =0;
+  dialButtonClick = false;
   
   gHaveNewFrame = false;
 
+  
   // encoder interrupts
   pinMode(ENCODER_A_PIN_1, INPUT_PULLUP);
   pinMode(ENCODER_A_PIN_2, INPUT_PULLUP);
-  attachInterrupt(ENCODER_A_PIN_1, handleEncoderA, RISING);
   pinMode(ENCODER_B_PIN_1, INPUT_PULLUP);
   pinMode(ENCODER_B_PIN_2, INPUT_PULLUP);
-  attachInterrupt(ENCODER_B_PIN_1, handleEncoderB, RISING);
   pinMode(ENCODER_C_PIN_1, INPUT_PULLUP);
   pinMode(ENCODER_C_PIN_2, INPUT_PULLUP);
-  attachInterrupt(ENCODER_C_PIN_1, handleEncoderC, RISING);
-
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  
+  attachInterrupt(ENCODER_A_PIN_1, handleEncoderA, FALLING);
+  attachInterrupt(ENCODER_B_PIN_1, handleEncoderB, FALLING);
+  attachInterrupt(ENCODER_C_PIN_1, handleEncoderC, FALLING);
+  attachInterrupt(BUTTON_PIN, handleButton, FALLING);
+  
   //
   // set up frame timer
   frameTimer.pause();
@@ -433,9 +444,7 @@ void updateDisplay()
 //----------------------------------------------------------------------------------------------------------------------
 void handleEncoderA()
 {
-  // pin ENCODER_A_PIN has changed, so something has happened.
-  // ENCODER_B_PIN determines direction.
-  if(digitalRead(ENCODER_A_PIN_1) == digitalRead(ENCODER_A_PIN_2))
+  if(digitalRead(ENCODER_A_PIN_2) == 0)
   {
     analogIncA ++;
   }
@@ -446,7 +455,7 @@ void handleEncoderA()
 }
 void handleEncoderB()
 {
-  if(digitalRead(ENCODER_B_PIN_1) == digitalRead(ENCODER_B_PIN_2))
+  if(digitalRead(ENCODER_B_PIN_2) == 0)
   {
     analogIncB ++;
   }
@@ -457,7 +466,7 @@ void handleEncoderB()
 }
 void handleEncoderC()
 {
-  if(digitalRead(ENCODER_C_PIN_1) == digitalRead(ENCODER_C_PIN_2))
+  if(digitalRead(ENCODER_C_PIN_2) == 0)
   {
     analogIncC ++;
   }
@@ -467,6 +476,13 @@ void handleEncoderC()
   }
 }
 
+void handleButton()
+{
+  if(digitalRead(BUTTON_PIN) == 0)
+  {
+    dialButtonClick = true;
+  }
+}
 
 #if HEARTH
 

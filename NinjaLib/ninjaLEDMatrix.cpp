@@ -125,7 +125,7 @@ void cNinjaLED::decodeFramebuffer( sUInt16 *framebuffer )
       sUInt8 g = (pixel >> 4) & 0x0f;
       sUInt8 b = (pixel >> 8) & 0x0f;
 
-      m_LEDs[(y * EdgeLen) + x] = ledColors[r][g];
+      m_LEDs[(y * EdgeLen) + x] = RGB(r << 4, g << 4, b << 4);
     }
   }
 }

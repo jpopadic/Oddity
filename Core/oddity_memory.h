@@ -42,6 +42,7 @@ struct FrameInput
 {
   // 1 or -1 denotes a change in dial position
   int   dialChange[3];
+  bool  dialClick;
 };
 
 struct FrameOutput
