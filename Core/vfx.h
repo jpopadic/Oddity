@@ -19,6 +19,9 @@ Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY);
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g);
 void ColourBand(Fix16 t, byte& r, byte& g);
 
+void FullSpectrum(const Fix16& t, byte& r, byte& g);
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 Fix16 Perlin3(Fix16 x, Fix16 y, Fix16 z);
 Fix16 Perlin2(Fix16 x, Fix16 y);
@@ -69,7 +72,7 @@ enum ColourChoice
   Black
 };
 
-inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
+inline void GetBasicColourIdx(int16_t index, ColourChoice cc, byte& r, byte& g)
 {
   if (index > 4)
     index = 4;
@@ -80,47 +83,47 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
   {
   case Red:
     {
-      const byte R[] = { 0, 1, 2, 3, 4 };
-      const byte G[] = { 0, 0, 0, 0, 0 };
+      const byte pure_red[16]   = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 }; 
+      const byte pure_green[16] = {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 }; 
 
-      r = R[index];
-      g = G[index];
+      r = pure_red[index];
+      g = pure_green[index];
     }
     break;
   case Green:
     {
-      const byte R[] = { 0, 0, 0, 0, 0 };
-      const byte G[] = { 0, 1, 2, 3, 4 };
+      const byte pure_red[16]   = {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 }; 
+      const byte pure_green[16] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 }; 
 
-      r = R[index];
-      g = G[index];
+      r = pure_red[index];
+      g = pure_green[index];
     }
     break;
   case Lime:
     {
-      const byte R[] = { 0, 1, 1, 2, 3 };
-      const byte G[] = { 0, 1, 2, 3, 4 };
+      const byte pure_red[16]   = {  0,  0,  1,  2,  2,  3,  4,  4,  5,  6,  7,  7,  8,  9,  9, 10 }; 
+      const byte pure_green[16] = {  0,  1,  2,  3,  4,  5,  5,  6,  8,  9, 10, 11, 11, 12, 13, 14 }; 
 
-      r = R[index];
-      g = G[index];
+      r = pure_red[index];
+      g = pure_green[index];
     }
     break;
   case Orange:
     {
-      const byte R[] = { 0, 1, 2, 3, 4 };
-      const byte G[] = { 0, 0, 0, 3, 4 };
+      const byte pure_red[16]   = {  0,  1,  2,  3,  4,  5,  5,  6,  8,  9, 10, 11, 11, 12, 13, 14 }; 
+      const byte pure_green[16] = {  0,  0,  1,  1,  2,  2,  3,  4,  4,  5,  5,  6,  6,  7,  8,  8 }; 
 
-      r = R[index];
-      g = G[index];
+      r = pure_red[index];
+      g = pure_green[index];
     }
     break;
   case Yellow:
     {
-      const byte R[] = { 0, 1, 2, 3, 4 };
-      const byte G[] = { 0, 1, 2, 3, 4 };
+      const byte pure_red[16]   = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 }; 
+      const byte pure_green[16] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 }; 
 
-      r = R[index];
-      g = G[index];
+      r = pure_red[index];
+      g = pure_green[index];
     }
     break;
   case Black:
@@ -134,8 +137,8 @@ inline void GetBasicColour(int16_t index, ColourChoice cc, byte& r, byte& g)
 
 inline void GetBasicColour(Fix16 t, ColourChoice cc, byte& r, byte& g)
 {
-  int16_t index = (t * fix16_from_float(5.0f)).asInt();
-  GetBasicColour(index, cc, r, g);
+  int16_t index = (t * fix16_from_float(16.0f)).asInt();
+  GetBasicColourIdx(index, cc, r, g);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

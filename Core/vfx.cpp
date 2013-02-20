@@ -43,10 +43,10 @@ void setLED(pixel* frame, int x, int y, byte r, byte g, bool additive, bool swap
     green = g;
   }
   
-  if (red > 4)
-    red = 4;
-  if (green > 4)
-    green = 4;
+  if (red > 15)
+    red = 15;
+  if (green > 15)
+    green = 15;
 
   LEDpixel = red | (green << 4);
 }
@@ -61,6 +61,20 @@ Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY)
   Fix16 distance = (dX * dX) + (dY * dY);
   return distance.sqrt();
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+void FullSpectrum(const Fix16& t, byte& r, byte& g)
+{
+  const byte full_spectrum_red[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 11, 13, 15, 15, 15, 15, 15, 15, 15, 15, 14, 12, 10, 8, 6, 4, 2, 1 }; 
+  const byte full_spectrum_green[32] = { 1, 2, 4, 6, 8, 10, 12, 14, 15, 15, 14, 15, 15, 15, 15, 15, 14, 12, 10, 8, 6, 5, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0 }; 
+
+  int index = (t * fix16_from_float(32.0f)).asInt(); 
+  index %= 32;
+
+  r = full_spectrum_red[index];
+  g = full_spectrum_green[index];
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g)
@@ -138,7 +152,7 @@ void draw::FontGlyph8x8(pixel* frame, char c, int16_t fx, int16_t fy, ColourChoi
 
       if (set > 0)
       {
-        GetBasicColour(set * 3, cc, r, g);
+        GetBasicColourIdx(set * 15, cc, r, g);
         setLED(frame, x + fx, y + fy, r, g);
       }
     }

@@ -77,7 +77,7 @@ bool plasma_tick(FrameOutput& output, FXState& state)
       tn += fx.cosMV(0.1f, YM2) * (data->step.sinMV(0.1f, 25.0f) * 0.3f);
       tn -= fy.sinMV(0.1f, XM1) * (data->step.cosMV(0.1f, 15.0f) * 0.3f);
 
-      ColourBand(tn, r, g);
+      FullSpectrum(tn, r, g);
       setLED(output.frame, x, y, r, g);
     }
   }
