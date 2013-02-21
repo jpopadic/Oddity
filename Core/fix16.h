@@ -18,7 +18,7 @@ extern "C"
 #endif
 
 #define FIXMATH_NO_CACHE
-#define FIXMATH_FAST_SIN
+//#define FIXMATH_FAST_SIN
 
 #ifdef _MSC_VER
 #include "pstdint.h"
