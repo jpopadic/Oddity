@@ -27,7 +27,12 @@ void setLED(pixel* frame, int x, int y, byte r, byte g, bool additive, bool swap
   if(y < 0 || y >= Constants::FrameHeight)
     return;    
 
-  pixel &LEDpixel = frame[y * Constants::FrameWidth + x];  
+#if ROTATE_SCREEN_CCW
+  pixel &LEDpixel = frame[x * Constants::FrameWidth + ((Constants::FrameHeight - 1) - y)];
+#else
+  pixel &LEDpixel = frame[y * Constants::FrameWidth + x];
+#endif
+
   byte red, green;
 
   if (additive)

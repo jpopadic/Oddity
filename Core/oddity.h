@@ -10,6 +10,8 @@
 #pragma once
 #include "oddity_memory.h"
 
+#define ROTATE_SCREEN_CCW 1
+
 namespace vfx
 {
 
