@@ -77,6 +77,7 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       inputs.dialChange[0] = (alA - analogLastA);
       inputs.dialChange[1] = (alB - analogLastB);
       inputs.dialChange[2] = (alC - analogLastC);
+      inputs.dialClick = false;
       analogLastA = alA;
       analogLastB = alB;
       analogLastC = alC;

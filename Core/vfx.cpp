@@ -127,7 +127,8 @@ void draw::FontGlyph16x16(pixel* frame, char c, int16_t fx, int16_t fy, ColourCh
   {
     for (int x=0; x<16; x++)
     {
-      GetBasicColour((int16_t)fontBuf[idx], cc, r, g);
+      int16_t colInd = fontBuf[idx] != 0 ? (fontBuf[idx] == 1 ? 2 : 15) : 0;
+      GetBasicColourIdx(colInd, cc, r, g);
       setLED(frame, x + fx, y + fy, r, g);
       idx ++;
     }

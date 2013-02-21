@@ -53,10 +53,8 @@ bool ripple_tick(FrameOutput& output, FXState& state)
 {
   EffectData* data = (EffectData*)state.store;
 
-
-  Fix16 zero = fix16_from_int(0);
   Fix16 divFour = fix16_from_float(0.1470588f);
-  Fix16 edgeMult = fix16_from_float(0.8f);
+  Fix16 edgeMult = fix16_from_float(0.75f);
 
   if(state.rng.genUInt32(0, 100) < data->dropFrequency)
   {
@@ -86,7 +84,7 @@ bool ripple_tick(FrameOutput& output, FXState& state)
       smoothed *= divFour;
 
       // combine avg and velocity
-      Fix16 newHeight = smoothed * fix16_from_float(2.0f) + velocity;
+      Fix16 newHeight = smoothed * fix16_from_float(0.3f) + velocity;
       
       // damp it
       newHeight *= data->damping;
@@ -98,15 +96,15 @@ bool ripple_tick(FrameOutput& output, FXState& state)
       newHeight = (newHeight * fix16_from_float(2.5f));
 
       // are there fix16 clamping functions someplace?
-      if(newHeight < zero)
-        newHeight = zero;
+      if(newHeight < fix16_zero)
+        newHeight = fix16_zero;
       if(newHeight > fix16_one)
         newHeight = fix16_one;
 
-      byte c = (byte)fix16_to_int(newHeight * fix16_from_int(15));
       
       byte r, g;
-      GetBasicColour(newHeight, Red, r, g);
+      FullSpectrum(newHeight, r, g);
+
       setLED(output.frame, x-1, y-1, r, g, 0);
     }
   }

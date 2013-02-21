@@ -123,6 +123,7 @@ void handleButton();
 volatile bool dialButtonClick;
 volatile int analogIncA, analogIncB, analogIncC;
 int analogLastA, analogLastB, analogLastC;
+int buttonSpinDown;
 
 //----------------------------------------------------------------------------------------------------------------------
 static FrameOutput g_output;
@@ -161,6 +162,9 @@ void loop()
   analogLastB = alB;
   analogLastC = alC;
   dialButtonClick = false;
+  
+  if (buttonSpinDown > 0)
+    buttonSpinDown --;
   
 
   g_state.counter ++;
@@ -276,6 +280,7 @@ void initialize()
   analogIncB = analogLastB =0;
   analogIncC = analogLastC =0;
   dialButtonClick = false;
+  buttonSpinDown = 0;
   
   gHaveNewFrame = false;
 
@@ -478,9 +483,10 @@ void handleEncoderC()
 
 void handleButton()
 {
-  if(digitalRead(BUTTON_PIN) == 0)
+  if(digitalRead(BUTTON_PIN) == 0 && buttonSpinDown == 0)
   {
     dialButtonClick = true;
+    buttonSpinDown = 20;
   }
 }
 

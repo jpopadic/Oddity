@@ -15,7 +15,9 @@
 // list of all known display modes (fx modules)
 #define DISP(_act) \
   _act(ripple) \
-  _act(plasma)
+  _act(plasma) \
+  _act(cube) \
+  _act(eq)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -66,17 +68,23 @@ struct DisplayMode
 namespace vfx
 {
 
+struct InterfaceStage 
+{
+  enum Enum
+  {
+    IS_GUI,
+    IS_FX
+  };
+};
+
 DisplayMode::Enum gCurrentDisplayMode = DisplayMode::plasma;
+InterfaceStage::Enum gCurrentInterfaceStage = InterfaceStage::IS_GUI;
 
 // ---------------------------------------------------------------------------------------------------------------------
 void init(FXState& state)
 {
   state.counter = 0;
   
-  for(int i = 0; i < Constants::MemoryPool; ++i)
-    state.store[i] = 0xFF;
-
-  DisplayMode::doInitFor(gCurrentDisplayMode, state);
 }
 
 static int32_t dialA = 0;
@@ -85,10 +93,129 @@ static int32_t dialB = 0;
 static Fix16 vTargetA = fix16_from_int(0), vCurA = fix16_from_int(0);
 static Fix16 vTargetB = fix16_from_int(0), vCurB = fix16_from_int(0);
 
+struct gui_entry
+{
+  int16_t offset;
+  ColourChoice cc;
+  DisplayMode::Enum mode;
+};
+
+static const char radioText[] = "PLASMA?CUBE?EQ?";
+static const gui_entry radioGUI[] = 
+{
+  {7, Lime, DisplayMode::plasma},
+  {12, Orange, DisplayMode::cube},
+  {0xff, Green, DisplayMode::eq},
+};
+static const int16_t radioGUICount = sizeof(radioGUI) / sizeof(gui_entry);
+
 // ---------------------------------------------------------------------------------------------------------------------
 bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 {
-//  DisplayMode::doTickFor(gCurrentDisplayMode, output, state);
+  output.clear();
+
+  switch (gCurrentInterfaceStage)
+  {
+  case InterfaceStage::IS_GUI:
+    {
+      const int16_t radioLen = sizeof(radioText) - 1;
+
+      Fix16 max_target = fix16_from_int(radioLen);
+      Fix16 max_value = fix16_from_int(radioLen - 1);
+
+      Fix16 dial16 = fix16_from_int( input.dialChange[1] );
+      Fix16 pt05 = fix16_from_float(-1.0f);
+
+      vTargetA += dial16 * fix16_from_float(0.2f);
+      if (vTargetA < fix16_neg_one)
+        vTargetA = fix16_neg_one;
+
+      if (vTargetA > max_target)
+        vTargetA = max_target;
+
+      vCurA += (vTargetA - vCurA) * fix16_from_float(0.01f);
+
+      if (vCurA < fix16_zero)
+        vCurA = fix16_zero;
+      if (vCurA > max_value)
+        vCurA = max_value;
+
+      int16_t off = ipart(vCurA).asInt();
+      if (off < 0)
+        off = 0;
+      if (off > radioLen - 1)
+        off = radioLen - 1;
+
+      const gui_entry* guient[3] = {0, 0, 0};
+      for (int16_t q=0; q<radioGUICount; q++)
+      {
+        if (off < radioGUI[q].offset)
+        {
+          guient[0] = &radioGUI[q];
+
+          for (int16_t q=0; q<radioGUICount; q++)
+          {
+            if (off - 1 < radioGUI[q].offset)
+            {
+              guient[2] = &radioGUI[q];
+              break;
+            }
+          }
+          for (int16_t q=0; q<radioGUICount; q++)
+          {
+            if (off + 1 < radioGUI[q].offset)
+            {
+              guient[1] = &radioGUI[q];
+              break;
+            }
+          }
+
+          break;
+        }
+      }
+
+
+      Fix16 charASlide = fpart(vCurA);
+
+
+      charASlide *= Fix16(-16.0f);
+      int16_t slideAInt = charASlide.asInt();
+
+      draw::FontGlyph16x16(output.frame, radioText[off], slideAInt, 0, guient[0]->cc);
+
+      draw::FontGlyph16x16(output.frame, radioText[off + 1], 16 + slideAInt, 0, guient[1]->cc);
+
+      if (off > 0)
+        draw::FontGlyph16x16(output.frame, radioText[off - 1], slideAInt - 16, 0, guient[2]->cc);
+
+      if (input.dialClick)
+      {
+        vCurA = vTargetA;
+
+        gCurrentDisplayMode = guient[0]->mode;
+        gCurrentInterfaceStage = InterfaceStage::IS_FX;
+
+        for(int i = 0; i < Constants::MemoryPool; ++i)
+          state.store[i] = 0xFF;
+
+        DisplayMode::doInitFor(gCurrentDisplayMode, state);
+      }
+    }
+    break;
+
+  case InterfaceStage::IS_FX:
+    {
+      DisplayMode::doTickFor(gCurrentDisplayMode, output, state);
+
+      if (input.dialClick)
+      {
+        gCurrentInterfaceStage = InterfaceStage::IS_GUI;
+      }
+    }
+    break;
+  }
+
+//  
 /*
    dial --;
    if (dial <= 0)
@@ -112,6 +239,9 @@ bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 dial = 6;   
 }  */
 
+
+
+  /*
   byte red, green;
   for (int y=0; y<Constants::FrameHeight; y++)
   {
@@ -164,36 +294,9 @@ dial = 6;
     yo + (cc2 * rad2), 
     Green);
 
+  */
 
 
-//    Fix16 pT = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.1f));
-//    Fix16 pY = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.03f));
-//  
-//    for (uint32_t x=0; x<Constants::FrameWidth; x++)
-//    {
-//      Fix16 pX = fix16_mul(fix16_from_int(x), fix16_from_float(0.3f));
-//      pX += pT;
-//  
-//      Fix16 row = Perlin2(pX, pY);
-//      row *= 17.0f;
-//  
-//      byte A[] = { 1, 2, 3, 3, 3, 2, 1, 0, 0 };
-//      byte B[] = { 0, 0, 0, 1, 2, 3, 3, 3, 2 };
-//  
-//      setLED(output.frame, x, 8, 1, 0);
-//  
-//      int rowInt = row.asInt();
-//      if (rowInt < 0)
-//        rowInt = -rowInt;
-//      if (rowInt > 8)
-//        rowInt = 8;
-//  
-//      for (uint32_t y=0; y<rowInt; y++)
-//      {
-//        setLED(output.frame, x, 8 - y, A[y], B[y]);
-//        setLED(output.frame, x, 8 + y, A[y], B[y]);
-//      }
-//    }
 
   return true;
 }

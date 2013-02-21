@@ -12,9 +12,41 @@
 #include "oddity.h"
 #include "fxp3d.h"
 
+// ---------------------------------------------------------------------------------------------------------------------
 #define oMIN(a,b)	(((a)<(b))?(a):(b))	
 #define oMAX(a,b)	(((a)>(b))?(a):(b))	
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+inline Fix16 ipart(const Fix16 &v)
+{
+  int16_t t = v.asInt();
+  return Fix16(t);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+inline Fix16 fpart(const Fix16 &v)
+{
+  Fix16 r(v);
+  r -= ipart(v);
+  //r.value = (r.value & 0x0000FFFF);
+  return r;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+inline Fix16 round(const Fix16 &v)
+{
+  return ipart(v + 0.5f);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+inline Fix16 rfpart(const Fix16 &v)
+{
+  return Fix16(1.0f) - fpart(v);
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 Fix16 DistanceBetween(Fix16 x, Fix16 y, Fix16 cX, Fix16 cY);
 void ColourGradient(Fix16 t, bool redFirst, bool halfGradient, byte& r, byte& g);
 void ColourBand(Fix16 t, byte& r, byte& g);
@@ -74,8 +106,8 @@ enum ColourChoice
 
 inline void GetBasicColourIdx(int16_t index, ColourChoice cc, byte& r, byte& g)
 {
-  if (index > 4)
-    index = 4;
+  if (index > 15)
+    index = 15;
   if (index < 0)
     index = 0;
 
@@ -101,7 +133,7 @@ inline void GetBasicColourIdx(int16_t index, ColourChoice cc, byte& r, byte& g)
     break;
   case Lime:
     {
-      const byte pure_red[16]   = {  0,  0,  1,  2,  2,  3,  4,  4,  5,  6,  7,  7,  8,  9,  9, 10 }; 
+      const byte pure_red[16]   = {  0,  0,  1,  2,  2,  3,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4 }; 
       const byte pure_green[16] = {  0,  1,  2,  3,  4,  5,  5,  6,  8,  9, 10, 11, 11, 12, 13, 14 }; 
 
       r = pure_red[index];
@@ -111,7 +143,7 @@ inline void GetBasicColourIdx(int16_t index, ColourChoice cc, byte& r, byte& g)
   case Orange:
     {
       const byte pure_red[16]   = {  0,  1,  2,  3,  4,  5,  5,  6,  8,  9, 10, 11, 11, 12, 13, 14 }; 
-      const byte pure_green[16] = {  0,  0,  1,  1,  2,  2,  3,  4,  4,  5,  5,  6,  6,  7,  8,  8 }; 
+      const byte pure_green[16] = {  0,  0,  1,  2,  2,  3,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4 };  
 
       r = pure_red[index];
       g = pure_green[index];

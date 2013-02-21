@@ -837,6 +837,8 @@ const unsigned char font_char_32[16 * 16] __FLASH__ = {
 // ---------------------------------------------------------------------------------------------------------------------
 const unsigned char* getFontGlyphData16x16(char c)
 {
+  if (c < 32)
+    return 0;
   if (c > 90)
     return 0;
 

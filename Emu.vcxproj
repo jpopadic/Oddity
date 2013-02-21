@@ -127,6 +127,8 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\disp_cube.cpp" />
+    <ClCompile Include="Core\disp_eq.cpp" />
     <ClCompile Include="Core\disp_plasma.cpp" />
     <ClCompile Include="Core\disp_ripple.cpp" />
     <ClCompile Include="Core\font_8x8.cpp" />
