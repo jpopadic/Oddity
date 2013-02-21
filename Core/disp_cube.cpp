@@ -34,6 +34,7 @@ static const int faces[6 * 4] = {
 struct EffectData
 {
   Fix16 rotX, rotY, rotZ, distPulse;
+  Fix16 delta;
   ColourChoice ccCycle;
 };
 
@@ -46,20 +47,37 @@ void cube_init(FXState& state)
 {
   EffectData* data = (EffectData*)state.store;
 
-  data->rotX = (fix16_t)state.rng.genUInt32(0, 0xfffff);
-  data->rotY = (fix16_t)state.rng.genUInt32(0, 0xfffff);
-  data->rotZ = (fix16_t)state.rng.genUInt32(0, 0xfffff);
+  data->rotX = (fix16_t)state.rng.genUInt32(0, 0x0fff);
+  data->rotY = (fix16_t)state.rng.genUInt32(0, 0x0fff);
+  data->rotZ = (fix16_t)state.rng.genUInt32(0, 0x0fff);
   data->distPulse = 0.0f;
 
-  data->ccCycle = (ColourChoice)state.rng.genUInt32(0, Yellow);
+  data->delta = 1.0f;
 
+  data->ccCycle = (ColourChoice)state.rng.genUInt32(0, Yellow);
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-bool cube_tick(FrameOutput& output, FXState& state)
+bool cube_tick(const FrameInput& input, FrameOutput& output, FXState& state)
 {
   EffectData* data = (EffectData*)state.store;
+
+  output.fade(3);
+
+
+  Fix16 dial2((int16_t)input.dialChange[2]);
+  dial2 *= fix16_from_float(1.75f);
+
+  data->rotY += dial2;
+  data->rotX -= dial2 * fix16_pt_five;
+  data->delta += Fix16((int16_t)input.dialChange[1]) * fix16_from_float(0.05f);
+
+  if (data->delta > fix16_one)
+    data->delta = fix16_one;
+  if (data->delta < fix16_zero)
+    data->delta = fix16_zero;
+
 
   Fxp3D pj[8];
 
@@ -74,10 +92,10 @@ bool cube_tick(FrameOutput& output, FXState& state)
     pj[i] = verts[i].eulerProject(data->rotX, data->rotY, data->rotZ, fov, dist);
   }
 
-  data->rotX += 0.6f;
-  data->rotY += 1.7f;
-  data->rotZ += 0.3f;
-  data->distPulse += 0.04f;
+  data->rotX += Fix16(0.6f) * data->delta;
+  data->rotY += Fix16(1.7f) * data->delta;
+  data->rotZ += Fix16(0.3f) * data->delta;
+  data->distPulse += Fix16(0.04f) * data->delta;
 
   for (int f=0; f<6; f++)
   {

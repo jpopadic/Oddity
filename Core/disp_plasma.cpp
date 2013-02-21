@@ -15,6 +15,8 @@ struct EffectData
   Fix16 step;
   Fix16 attractorScales[4];
 
+  Fix16 speed;
+
   bool mutations[16];
 };
 
@@ -29,6 +31,8 @@ void plasma_init(FXState& state)
 
   data->step = (fix16_t)state.rng.genUInt32(0, 0xffffff);
 
+  data->speed = 0.4f;
+
   for (int i=0; i<16; i++)
     data->mutations[i] = state.rng.genBool();
 
@@ -38,7 +42,7 @@ void plasma_init(FXState& state)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-bool plasma_tick(FrameOutput& output, FXState& state)
+bool plasma_tick(const FrameInput& input, FrameOutput& output, FXState& state)
 {
   EffectData* data = (EffectData*)state.store;
 

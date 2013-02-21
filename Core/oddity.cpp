@@ -11,6 +11,55 @@
 #include "vfx.h"
 
 
+uint32_t MurmurHash2(const void *key, uint32_t len, uint32_t seed)
+{
+  // 'm' and 'r' are mixing constants generated offline.
+  // They're not really 'magic', they just happen to work well.
+  const uint32_t m = 0x5bd1e995;
+  const int32_t r = 24;
+
+  // Initialize the hash to a 'random' value
+  uint32_t h = seed ^ len;
+
+  // Mix 4 bytes at a time into the hash
+  const uint8_t *data = (const uint8_t *)key;
+
+  while(len >= 4)
+  {
+    uint32_t k = *(const uint32_t *)data;       //lint !e826 cast to ptr of larger size
+
+    k *= m; 
+    k ^= k >> r; 
+    k *= m; 
+
+    h *= m; 
+    h ^= k;
+
+    data += 4;
+    len -= 4;
+  }
+
+  // Handle the last few bytes of the input array
+
+  switch(len)
+  {
+    //lint --e{616, 825} // control flows into case/default
+  case 3: h ^= data[2] << 16;
+  case 2: h ^= data[1] << 8;
+  case 1: h ^= data[0];
+    h *= m;
+
+  }; //lint !e744 no default
+
+  // Do a few final mixes of the hash to ensure the last few
+  // bytes are well-incorporated.
+  h ^= h >> 13;
+  h *= m;
+  h ^= h >> 15;
+
+  return h;
+} 
+
 // ---------------------------------------------------------------------------------------------------------------------
 // list of all known display modes (fx modules)
 #define DISP(_act) \
@@ -24,7 +73,7 @@
 // enum magic to turn the list above into useful code / ids / etc
 #define PREDEC(_disp) \
   extern void _disp##_init(FXState& state); \
-  extern bool _disp##_tick(FrameOutput& output, FXState& state);
+  extern bool _disp##_tick(const FrameInput& input, FrameOutput& output, FXState& state);
 
 #define ENUMID(_disp) \
   _disp,
@@ -32,7 +81,7 @@
 #define DOINIT(_disp) \
   case _disp: _disp##_init(state); break;
 #define DOTICK(_disp) \
-  case _disp: _disp##_tick(output, state); break;
+  case _disp: _disp##_tick(input, output, state); break;
 
 DISP(PREDEC)
 struct DisplayMode
@@ -52,7 +101,7 @@ struct DisplayMode
         break;
     }
   }
-  static void doTickFor(Enum e, FrameOutput& output, FXState& state)
+  static void doTickFor(Enum e, const FrameInput& input, FrameOutput& output, FXState& state)
   {
     switch (e)
     {
@@ -84,7 +133,8 @@ InterfaceStage::Enum gCurrentInterfaceStage = InterfaceStage::IS_GUI;
 void init(FXState& state)
 {
   state.counter = 0;
-  
+
+  state.rng.reseed(MurmurHash2(__TIMESTAMP__, sizeof(__TIMESTAMP__), 0xb33f));
 }
 
 static int32_t dialA = 0;
@@ -100,11 +150,11 @@ struct gui_entry
   DisplayMode::Enum mode;
 };
 
-static const char radioText[] = "PLASMA?CUBE?EQ?";
+static const char radioText[] = "00.01.02";
 static const gui_entry radioGUI[] = 
 {
-  {7, Lime, DisplayMode::plasma},
-  {12, Orange, DisplayMode::cube},
+  {3, Lime, DisplayMode::plasma},
+  {6, Orange, DisplayMode::cube},
   {0xff, Green, DisplayMode::eq},
 };
 static const int16_t radioGUICount = sizeof(radioGUI) / sizeof(gui_entry);
@@ -112,8 +162,6 @@ static const int16_t radioGUICount = sizeof(radioGUI) / sizeof(gui_entry);
 // ---------------------------------------------------------------------------------------------------------------------
 bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 {
-  output.clear();
-
   switch (gCurrentInterfaceStage)
   {
   case InterfaceStage::IS_GUI:
@@ -190,7 +238,7 @@ bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 
       if (input.dialClick)
       {
-        vCurA = vTargetA;
+        vTargetA = vCurA;
 
         gCurrentDisplayMode = guient[0]->mode;
         gCurrentInterfaceStage = InterfaceStage::IS_FX;
@@ -205,7 +253,7 @@ bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
 
   case InterfaceStage::IS_FX:
     {
-      DisplayMode::doTickFor(gCurrentDisplayMode, output, state);
+      DisplayMode::doTickFor(gCurrentDisplayMode, input, output, state);
 
       if (input.dialClick)
       {

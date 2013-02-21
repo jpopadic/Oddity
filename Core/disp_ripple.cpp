@@ -49,9 +49,11 @@ void ripple_init(FXState& state)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-bool ripple_tick(FrameOutput& output, FXState& state)
+bool ripple_tick(const FrameInput& input, FrameOutput& output, FXState& state)
 {
   EffectData* data = (EffectData*)state.store;
+
+  output.clear();
 
   Fix16 divFour = fix16_from_float(0.1470588f);
   Fix16 edgeMult = fix16_from_float(0.75f);

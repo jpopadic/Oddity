@@ -26,8 +26,10 @@ void eq_init(FXState& state)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-bool eq_tick(FrameOutput& output, FXState& state)
+bool eq_tick(const FrameInput& input, FrameOutput& output, FXState& state)
 {
+  output.clear();
+
   Fix16 pT = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.1f));
   Fix16 pY = fix16_mul(fix16_from_int(state.counter), fix16_from_float(0.03f));
 

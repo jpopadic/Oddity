@@ -56,6 +56,28 @@ struct FrameOutput
     for(uint32_t i = 0; i < Constants::FrameSize; ++i)
       frame[i] = 0;
   }
+
+  void fade(int32_t times)
+  {
+    byte r, g;
+    for(uint32_t i = 0; i < Constants::FrameSize; ++i)
+    {
+      pixel &pxl = frame[i];  
+
+      for (int32_t q=0; q<times; q++)
+      {
+        r = pxl & 0x0f;
+        g = (pxl >> 4) & 0x0f;
+
+        if (r > 0)
+          r --;
+        if (g > 0)
+          g --;
+
+        pxl = r | (g << 4);
+      }
+    }
+  }
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
