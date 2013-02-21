@@ -10,6 +10,8 @@
 #define IDC_SPIN2                       1013
 #define IDC_EXITODD                     1014
 #define IDC_SPIN3                       1015
+#define IDC_EXITODD2                    1016
+#define IDC_CLICKER                     1016
 
 // Next default values for new objects
 // 

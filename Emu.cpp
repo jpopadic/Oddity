@@ -13,7 +13,7 @@ FXState     g_state;
 
 int analogIncA, analogIncB, analogIncC;
 int analogLastA, analogLastB, analogLastC;
-
+bool shouldClick = false;
 
 //----------------------------------------------------------------------------------------------------------------------
 BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -36,6 +36,8 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
       createNinjaButton(GetDlgItem(hWnd,IDC_EXITODD),NULL,NJALIGN_CENTER,FALSE);
       setBaseHeavyStyle(GetDlgItem(hWnd,IDC_EXITODD),TRUE);
+
+      createNinjaButton(GetDlgItem(hWnd,IDC_CLICKER),NULL,NJALIGN_CENTER,FALSE);
 
       LEDdisplay = createNinjaLED(GetDlgItem(hWnd,IDC_LED), Constants::FrameWidth);
 
@@ -79,10 +81,12 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       inputs.dialChange[0] = (alA - analogLastA);
       inputs.dialChange[1] = (alB - analogLastB);
       inputs.dialChange[2] = (alC - analogLastC);
-      inputs.dialClick = false;
+      inputs.dialClick = shouldClick;
       analogLastA = alA;
       analogLastB = alB;
       analogLastC = alC;
+
+      shouldClick = false;
 
 
       vfx::tick(inputs, g_state, g_output);
@@ -101,6 +105,11 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       case IDC_EXITODD:
         EndDialog(hWnd,0);
         break;
+
+      case IDC_CLICKER:
+        shouldClick = true;
+        break;
+
       }
     }
     break;

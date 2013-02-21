@@ -122,12 +122,16 @@ struct InterfaceStage
   enum Enum
   {
     IS_GUI,
-    IS_FX
+    IS_FADETO,
+    IS_FX,
+    IS_FADEFROM
   };
 };
 
 DisplayMode::Enum gCurrentDisplayMode = DisplayMode::plasma;
 InterfaceStage::Enum gCurrentInterfaceStage = InterfaceStage::IS_GUI;
+DisplayMode::Enum gNextDisplayMode = DisplayMode::plasma;
+int16_t fadeTick = 0;
 
 // ---------------------------------------------------------------------------------------------------------------------
 void init(FXState& state)
@@ -166,6 +170,8 @@ bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
   {
   case InterfaceStage::IS_GUI:
     {
+      output.clear();
+
       const int16_t radioLen = sizeof(radioText) - 1;
 
       Fix16 max_target = fix16_from_int(radioLen);
@@ -236,17 +242,39 @@ bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
       if (off > 0)
         draw::FontGlyph16x16(output.frame, radioText[off - 1], slideAInt - 16, 0, guient[2]->cc);
 
+      if (fadeTick < 15)
+      {
+        fadeTick ++;
+        output.fade(15 - fadeTick);
+      }
+
       if (input.dialClick)
+      {
+        gCurrentInterfaceStage = InterfaceStage::IS_FADETO;
+
+        gNextDisplayMode = guient[0]->mode;
+      }
+    }
+    break;
+
+  case InterfaceStage::IS_FADETO:
+    {
+      output.fade(1);
+
+      fadeTick --;
+      if (fadeTick <= 0)
       {
         vTargetA = vCurA;
 
-        gCurrentDisplayMode = guient[0]->mode;
-        gCurrentInterfaceStage = InterfaceStage::IS_FX;
+        gCurrentDisplayMode = gNextDisplayMode;
 
         for(int i = 0; i < Constants::MemoryPool; ++i)
           state.store[i] = 0xFF;
 
         DisplayMode::doInitFor(gCurrentDisplayMode, state);
+        fadeTick = 0;
+
+        gCurrentInterfaceStage = InterfaceStage::IS_FX;
       }
     }
     break;
@@ -255,12 +283,34 @@ bool tick(const FrameInput& input, FXState& state, FrameOutput& output)
     {
       DisplayMode::doTickFor(gCurrentDisplayMode, input, output, state);
 
+      if (fadeTick < 15)
+      {
+        fadeTick ++;
+        output.fade(15 - fadeTick);
+      }
+
       if (input.dialClick)
       {
-        gCurrentInterfaceStage = InterfaceStage::IS_GUI;
+        gCurrentInterfaceStage = InterfaceStage::IS_FADEFROM;
       }
     }
     break;
+
+  case InterfaceStage::IS_FADEFROM:
+    {
+      DisplayMode::doTickFor(gCurrentDisplayMode, input, output, state);
+
+      output.fade(15 - fadeTick);
+
+      fadeTick --;
+      if (fadeTick <= 0)
+      {
+        gCurrentInterfaceStage = InterfaceStage::IS_GUI;
+        fadeTick = 0;
+      }
+    }
+    break;
+
   }
 
 //  
