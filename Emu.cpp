@@ -39,6 +39,8 @@ BOOL CALLBACK basicHostProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
       LEDdisplay = createNinjaLED(GetDlgItem(hWnd,IDC_LED), Constants::FrameWidth);
 
+      ::SetWindowPos(GetDlgItem(hWnd,IDC_LED), NULL, 0, 0, (14 * Constants::FrameWidth) + 10, (14 * Constants::FrameHeight) + 10, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+
       SetTimer(hWnd, 0x01, 20, NULL);
 
       g_output.clear();
