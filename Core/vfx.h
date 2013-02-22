@@ -80,6 +80,13 @@ inline void ZeroFrame(_T* frame)
     frame[i] = 0;
 }
 
+template <typename _T>
+inline void ZeroFrame(_T* frame, _T& zval)
+{
+  for(int i = 0; i < Constants::FrameSize; ++i)
+    frame[i] = zval;
+}
+
 template <typename _Tf, typename _Tt>
 inline void CopyFrame(_Tf* from, _Tt* to)
 {

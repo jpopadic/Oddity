@@ -66,7 +66,9 @@ uint32_t MurmurHash2(const void *key, uint32_t len, uint32_t seed)
   _act(ripple) \
   _act(plasma) \
   _act(cube) \
-  _act(eq)
+  _act(eq) \
+  _act(rotozoom) \
+  _act(fire)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -154,11 +156,12 @@ struct gui_entry
   DisplayMode::Enum mode;
 };
 
-static const char radioText[] = "00.01.02";
+static const char radioText[] = "00.01.02.03";
 static const gui_entry radioGUI[] = 
 {
   {3, Lime, DisplayMode::plasma},
   {6, Orange, DisplayMode::cube},
+  {9, Red, DisplayMode::fire},
   {0xff, Green, DisplayMode::eq},
 };
 static const int16_t radioGUICount = sizeof(radioGUI) / sizeof(gui_entry);

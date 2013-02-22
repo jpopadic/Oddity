@@ -129,8 +129,10 @@
   <ItemGroup>
     <ClCompile Include="Core\disp_cube.cpp" />
     <ClCompile Include="Core\disp_eq.cpp" />
+    <ClCompile Include="Core\disp_fire.cpp" />
     <ClCompile Include="Core\disp_plasma.cpp" />
     <ClCompile Include="Core\disp_ripple.cpp" />
+    <ClCompile Include="Core\disp_rotozoom.cpp" />
     <ClCompile Include="Core\font_8x8.cpp" />
     <ClCompile Include="Core\vfx_perlin.cpp" />
     <ClCompile Include="NinjaLib\GDITools.cpp">

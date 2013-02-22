@@ -220,6 +220,12 @@
     <ClCompile Include="Core\disp_cube.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\disp_fire.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\disp_rotozoom.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Emu.rc" />
